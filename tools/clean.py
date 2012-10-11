@@ -55,7 +55,7 @@ def clean(input_name,dest_dir,keep_time=False, apply_limits=False):
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
-            clean_file(os.path.join(input_name,filename), os.path.join(dest_dir,filename.strip()), keep_time, apply_limits)
+            clean_file(os.path.join(input_name,filename.strip()), os.path.join(dest_dir,filename.strip()), keep_time, apply_limits)
     else:
         filename= os.path.basename(input_name)
         clean_file(input_name, os.path.join(dest_dir,filename.strip()), keep_time,apply_limits)
@@ -81,7 +81,7 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
 
     """
     filename = os.path.basename(inputfile).strip()
-    with open(inputfile.strip(),"r") as fdin:
+    with open(inputfile,"r") as fdin:
         with open(dest_file,"w") as fdout:
             for line in fdin:
                 data =  line.split()
@@ -100,13 +100,13 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
                         if hrf>= 50 and hrf<=250:
                             if keep_time:
                                 time = data[0]
-                                fdout.write(time+" ")
-                            fdout.write(str(hrf)+"\n")
+                                fdout.write("%s "%time)
+                            fdout.write("%d\n"%hrf)
                     else:
                         if keep_time:
                             time = data[0]
-                            fdout.write(time+" ")
-                        fdout.write(str(hrf)+"\n")    
+                            fdout.write("%s "%time)
+                        fdout.write("%d\n"%hrf)    
                         
 
 

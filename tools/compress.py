@@ -39,12 +39,23 @@ This module's entry point function is compress(...)
 """
 
 import os
+import subprocess
 import sys
 import zlib
+import tempfile
+import timeit
+import time
+from collections import namedtuple
+from memoize import Memoize
+
+#DEFENITIONS
+
+
+CompressionData = namedtuple('CompressionData','original compressed time')
 
 #ENTRY POINT FUNCTION
-
-def compress(input_name,compression_algorithm,level):
+@Memoize
+def compress(input_name,compression_algorithm,level,decompress=False):
     """Given a file or directory named input_name, apply the desired
     compression algorithm to all the files.
 
@@ -74,16 +85,18 @@ def compress(input_name,compression_algorithm,level):
     else:
         level=str(level)
 
+
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
             filename = filename.strip()#removes the tailing \n
-            original_size, compressed_size = method_to_call(os.path.join(input_name,filename),level)
-            compressed[filename.strip()]=(original_size,compressed_size)
+            compression_data = method_to_call(os.path.join(input_name,filename),level,decompress)
+            compressed[filename.strip()]= compression_data
     else:
-        original_size, compressed_size = method_to_call(input_name.strip(),level)
-        compressed[input_name.strip()]=(original_size,compressed_size)
+        compression_data = method_to_call(input_name.strip(),level,decompress)
+        compressed[input_name.strip()]= compression_data
     return compressed
+
 
 #IMPLEMENTATION
 
@@ -119,7 +132,7 @@ def zlib_compress(inputfile,level):
     return (original_size,compressed_size)
 
 
-def paq8l_compress(inputfile,level):
+def paq8l_compress(inputfile,level,decompress):
     """
     Compresses one file using the paq8l tool, the size is
     determined by quering the file paq8l creates, this temporary file
@@ -138,10 +151,18 @@ def paq8l_compress(inputfile,level):
     os.system('paq8l -'+level+' "'+inputfile+'"')
     original_size= int(os.stat(inputfile).st_size)
     compressed_size = int(os.stat(inputfile+'.paq8l').st_size)
+    decompress_time=None
+    if decompress:
+        decompress_time = timeit.timeit('subprocess.call(\'paq8l -d "%s.paq8l"\',shell=True)'%inputfile,number=10,setup='import subprocess')
+        
     os.remove(inputfile+'.paq8l')
-    return (original_size,compressed_size)
 
-def lzma_compress(inputfile,level):
+    cd = CompressionData(original_size,compressed_size,decompress_time)
+
+    return cd
+
+
+def lzma_compress(inputfile,level,decompress):
     """
     Compresses one file using the lzma tool, the size is determined by
     quering the a temporary file created by lzma, this temporary file
@@ -160,11 +181,17 @@ def lzma_compress(inputfile,level):
     os.system('lzma -c -'+level+' "'+inputfile+'" > "'+inputfile+'.lzma"')
     original_size= int(os.stat(inputfile).st_size)
     compressed_size = int(os.stat(inputfile+'.lzma').st_size)
+    decompress_time=None
+    
+    if decompress:
+        decompress_time = timeit.timeit('subprocess.call(\'lzma -dkf "%s.lzma"\',shell=True)'%inputfile,number=10,setup='import subprocess')     
 
     os.remove(inputfile+'.lzma')
-    return (original_size,compressed_size)
 
-def gzip_compress(inputfile,level):
+    cd = CompressionData(original_size,compressed_size,decompress_time)
+    return cd
+
+def gzip_compress(inputfile,level,decompress):
     """
     Compresses one file using the gzip tool, the size is determined by
     quering the a temporary file created by gzip, this temporary file
@@ -183,8 +210,14 @@ def gzip_compress(inputfile,level):
     os.system('gzip -c -'+level+' "'+inputfile+'" > "'+inputfile+'.gz"')
     original_size= int(os.stat(inputfile).st_size)
     compressed_size = int(os.stat(inputfile+'.gz').st_size)
+    decompress_time=None
+    if decompress:
+        decompress_time = timeit.timeit('subprocess.call(\'gzip -dc "%s.gz"\',shell=True)'%inputfile,number=10,setup='import subprocess')     
+
     os.remove(inputfile+'.gz')
-    return (original_size,compressed_size)
+
+    cd = CompressionData(original_size,compressed_size,decompress_time)
+    return cd
 
 def zip_compress(inputfile,level):
     """
@@ -319,4 +352,15 @@ def add_parser_options(parser):
     Return:None
     """
     parser.add_argument("-c","--compressor",dest="compressor",metavar="COMPRESSOR",action="store",choices=AVAILABLE_COMPRESSORS,default=AVAILABLE_COMPRESSORS.keys()[0],help="compression compressor to be used, available compressors:"+', '.join(AVAILABLE_COMPRESSORS)+";default:[%(default)s]")
+    parser.add_argument("--decompress",dest="decompress",action="store_true",default=False,help="Use this options if you want the decompressio time instead of the compression size")
     parser.add_argument("--level",dest="level",metavar="LEVEL",action="store",type=int,help="compression level to be used, this variable is compressor dependent; default:[The maximum of wathever compressor was chosen]")
+
+def set_level(options):
+    if ((not options['level']) or 
+        (options['level']> AVAILABLE_COMPRESSORS[options['compressor']][1])):
+        level= AVAILABLE_COMPRESSORS[options['compressor']][1]
+    elif options['level']< AVAILABLE_COMPRESSORS[options['compressor']][0]:
+        level= AVAILABLE_COMPRESSORS[options['compressor']][0]
+    else:
+        level= options['level']
+    return level

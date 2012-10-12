@@ -48,7 +48,7 @@ import pickle
 SAMPLE_SIZE=42
 
 #ENTRY POINT FUNCTIONS
-def partition_chunck(input_name,dest_dir,cutting_method,starting_point=0,interval=-1,start_at_end=False):
+def partition_chunk(input_name,dest_dir,cutting_method,starting_point=0,interval=-1,start_at_end=False):
     """
     Grab a chunck from input_name or from each file in input_name if
     input_name is a directory. A chunk may start anywhere in the file
@@ -182,7 +182,7 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
     return block_minuts
 
 
-def partition_chunck_using_time(inputfile,dest_dir,init_seconds,interval,start_at_end):
+def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at_end):
     """
     Grabs a part of the file with a certain time interval of captured
     signal starting from an initial time.
@@ -223,12 +223,11 @@ def partition_chunck_using_time(inputfile,dest_dir,init_seconds,interval,start_a
         else:
             interval=sys.maxint
             
-        cumulative, time_stamp = sniffer(lines[line_index:SAMPLE_SIZE])
+        cumulative, time_stamp = sniffer(lines[0:SAMPLE_SIZE])
 
             
     #If the init time in not 0 jump to that point in time, the cursor
     #is moved to exactly the start of the requested interval
-        print cumulative,time_stamp,init_seconds
 
         time, hrf = lines[line_index].split()
 
@@ -263,8 +262,8 @@ def partition_chunck_using_time(inputfile,dest_dir,init_seconds,interval,start_a
             else:
                 partition_test = time_elapsed+ time_stamp <= interval*1000
             while partition_test:
-#                s=hrf+'\n'
-                s = time+" "+hrf+"\n"
+                s=hrf+'\n'
+#                s = time+" "+hrf+"\n"
 #                fdout.write(s.encode('utf8'))
                 fdout.write(s)
                 if start_at_end:

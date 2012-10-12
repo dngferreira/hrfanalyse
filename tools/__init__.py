@@ -36,4 +36,5 @@ pyeeg -- an entropy library made available by Forrest S. Bao, Xin Liu and Christ
 separate_blocks -- Using some metric define upper and lower limits and
 mark block that are above upper limits or below lower limits.
 
+memoize -- a helper class to memoize function return values
 """

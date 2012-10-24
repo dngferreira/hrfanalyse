@@ -223,7 +223,10 @@ def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at
         else:
             interval=sys.maxint
             
-        cumulative, time_stamp = sniffer(lines[0:SAMPLE_SIZE])
+        if start_at_end:
+            cumulative, time_stamp = sniffer(lines[-SAMPLE_SIZE:])
+        else:
+            cumulative, time_stamp = sniffer(lines[:SAMPLE_SIZE])
 
             
     #If the init time in not 0 jump to that point in time, the cursor

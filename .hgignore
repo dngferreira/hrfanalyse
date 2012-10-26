@@ -1,4 +1,4 @@
 syntax:glob
 *.{pyc,pyo}
 *~
-data/*
+unittest_dataset_*

@@ -29,7 +29,7 @@ distance -- Calculate the distance between two files
 
 entropy -- Application of pyeeg and other tool to data to determine entropy
 
-partition -- File partition -- this is a strict partition by either minutes or lines.
+partition -- File partition -- partition a file in blocks or cut of a chunk of the file using either minutes or lines.
 
 pyeeg -- an entropy library made available by Forrest S. Bao, Xin Liu and Christina Zhang, "PyEEG: An Open Source Python Module for EEG/MEG Feature Extraction," Computational Intelligence and Neuroscience, March, 2011 
 

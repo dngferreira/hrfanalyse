@@ -92,17 +92,17 @@ def nid(filename1,filename2,compressor,level,decompress):
         file_total_data += file2.readlines()
     for line in file_total_data:
         temp_file.write(line)
+    temp_file.close()
 
     file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
     file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
     temp_file_cdata = compress.compress(temp_file.name,compressor,level,decompress)[temp_file.name]
-    
+
     if decompress:
         dist = (temp_file_cdata.time - min(file1_cdata.time,file2_cdata.time))/float(max(file1_cdata.time,file2_cdata.time))
     else:
         dist = (temp_file_cdata.compressed - min(file1_cdata.compressed,file2_cdata.compressed))/float(max(file1_cdata.compressed,file2_cdata.compressed))
         
-    temp_file.close()
     os.unlink(temp_file.name)
     return dist
 
@@ -145,6 +145,10 @@ def d1(filename1,filename2,compressor,level,decompress):
     for line in file2_file1_data:
         file2_file1.write(line)
 
+    file1_file2.close()
+    file2_file1.close()
+    
+
     file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
     file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
     file1_file2_cdata = compress.compress(file1_file2.name,compressor,level,decompress)[file1_file2.name]
@@ -157,8 +161,6 @@ def d1(filename1,filename2,compressor,level,decompress):
         dist = max(file1_file2_cdata.compressed - file1_cdata.compressed, file2_file1_cdata.compressed - file2_cdata.compressed)/ float(max(file1_cdata.compressed, file2_cdata.compressed))
 
 
-    file1_file2.close()
-    file2_file1.close()
     os.unlink(file1_file2.name)
     os.unlink(file2_file1.name)
 
@@ -202,6 +204,9 @@ def d2(filename1,filename2,compressor,level,decompress):
     for line in file2_file1_data:
         file2_file1.write(line)
 
+    file1_file2.close()
+    file2_file1.close()
+
     file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
     file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
     file1_file2_cdata = compress.compress(file1_file2.name,compressor,level,decompress)[file1_file2.name]
@@ -212,8 +217,7 @@ def d2(filename1,filename2,compressor,level,decompress):
     else:
         dist = (file1_file2_cdata.compressed - file1_cdata.compressed + file2_file1_cdata.compressed - file2_cdata.compressed) / (1/2.0 * (file1_file2_cdata.compressed + file2_file1_cdata.compressed))
 
-    file1_file2.close()
-    file2_file1.close()
+    
     os.unlink(file1_file2.name)
     os.unlink(file2_file1.name)
 
@@ -238,7 +242,7 @@ def add_parser_options(parser):
     d2 = parser.add_parser('d2',help="Distance 2 ( d2(f1,f2) = c(f1.f2) − c(f1) + c(f2.f1) − c(f2)/( 1/2*(c(f1.f2) + c(f2.f1)))) proposed in the article --> http://www.dm.unibo.it/~farinell/paginelink/articolinostri/HRVLZ.pdf")
 
 
-    tools.compress.add_parser_options(nid)
-    tools.compress.add_parser_options(d1)
-    tools.compress.add_parser_options(d2)
+    compress.add_parser_options(nid)
+    compress.add_parser_options(d1)
+    compress.add_parser_options(d2)
 

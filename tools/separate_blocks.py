@@ -95,10 +95,12 @@ def apply_metric_file(compressed_blocks,block_times,metric):
     partition whose size is bellow the lower limit or above the upper
     limit. The marked blocks are written to a .csv file.
     """
+    compression_sizes = [compressed_blocks[fileblock].compressed for fileblock in compressed_blocks]
+    print compression_sizes
     if(metric=='mean_std'):
-        lower_lim,upper_lim = mean_std(compressed_blocks)
+        lower_lim,upper_lim = mean_std(compression_sizes)
     elif(metric=='outliers'):
-        lower_lim,upper_lim = outliers(compressed_blocks)
+        lower_lim,upper_lim = outliers(compression_sizes)
     below_lower = {}
     above_upper = {}
     
@@ -119,15 +121,15 @@ def mean_std(compressed_sizes):
     """
     Defines the limits using the mean and standard deviation.
     
-    Arguments:Dictionary with compressed file sizes as values.
+    Arguments:List with compressed file sizes.
     
     Return: A tuple with lower limit, and upper limit.
 
     Lower limit is defined as mean - standard deviation
     Upper limit is defined as mean + standard deviation 
     """
-    mean_size = numpy.mean(compressed_sizes.values()) 
-    std_size = numpy.std(compressed_sizes.values())
+    mean_size = numpy.mean(compressed_sizes) 
+    std_size = numpy.std(compressed_sizes)
     upper_lim = mean_size + std_size
     lower_lim = mean_size - std_size
 
@@ -147,7 +149,7 @@ def outliers(compressed_sizes):
     where,
     Inter Percentil Ratio = Percentil(75)-Percentil(25)
     """
-    ordered_sizes = sorted([b for (a,b) in compressed_sizes.values()])
+    ordered_sizes = sorted(compressed_sizes)
     p25_index = len(ordered_sizes)*25/100.0+0.5
     p75_index = len(ordered_sizes)*75/100.0+0.5
     p50_index = len(ordered_sizes)*50/100.0+0.5

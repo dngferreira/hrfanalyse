@@ -96,7 +96,7 @@ def partition_blocks(input_name,dest_dir,section_secs,gap_secs):
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
-            file_block_dir = os.path.join(dest_dir,filename.strip())
+            file_block_dir = os.path.join(dest_dir,"%s_blocks"%filename.strip())
             if(not os.path.isdir(file_block_dir)):
                 print "Creating ",file_block_dir,"..."
                 os.makedirs(file_block_dir)
@@ -112,7 +112,7 @@ def partition_blocks(input_name,dest_dir,section_secs,gap_secs):
 def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
     """
     Partitions the input file into section with a user defined amount
-    of time, where each section beginning will have a gap to the next
+    of time, where each section's beginning will have a gap to the next
     section's beginning. For example a 5 sec section with a 1 sec gap,
     means the first section start at second 0 end at second 5, the
     second would start at second 1 and end at 6, etc...
@@ -152,10 +152,10 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
                 fdpart.write("%s\n"%hrf)
                 if cumulative:
                     real_end = float(time)-time_stamp
-                    gap_test = abs(float(time)-time_stamp) <= (k-1)*section_secs+ k*gap_secs
+                    gap_test = abs(float(time)-time_stamp) <= k*gap_secs
                 else:
                     real_end += float(time)/1000
-                    gap_test = time_elapsed+time_stamp <= section_secs*1000
+                    gap_test = time_elapsed+time_stamp <= gap_secs*1000
                     time_elapsed += time_stamp
                 if gap_test:
                     next_partition_start +=1 
@@ -257,23 +257,24 @@ def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at
                     time_elapsed += time_stamp
                     jump_to_init_test = time_elapsed + time_stamp < init_seconds*1000
   
-
 #write the data to the outfile until the end of the requested interval is reached
         with open(os.path.join(dest_dir,filename),"w") as fdout:
+            data = ""
             if cumulative:
                 partition_test = abs(float(time)-time_stamp) <= interval
             else:
                 partition_test = time_elapsed+ time_stamp <= interval*1000
             while partition_test:
-                s=hrf+'\n'
-#                s = time+" "+hrf+"\n"
+#                s=hrf+'\n'
+                s = "%s %s\n"%(time,hrf)
 #                fdout.write(s.encode('utf8'))
-                fdout.write(s)
                 if start_at_end:
+                    data = s+data 
                     line_index-=1
                     if abs(line_index)>=len(lines):
                         break
                 else:
+                    data = data+s
                     line_index+=1
                     if line_index>=len(lines):
                         break
@@ -285,6 +286,7 @@ def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at
                 else:
                     time_elapsed += time_stamp
                     partition_test = time_elapsed + time_stamp <= interval*1000
+            fdout.write(data)
             
 
 def partition_chunk_using_lines(inputfile,dest_dir,init_line,interval,start_at_end):

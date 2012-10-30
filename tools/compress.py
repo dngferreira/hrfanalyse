@@ -43,7 +43,10 @@ import subprocess
 import sys
 import zlib
 import bz2
-import lzma
+try:
+    import lzma
+except:
+    import pylzma as lzma
 import timeit
 import time
 from collections import namedtuple

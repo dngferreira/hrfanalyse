@@ -351,8 +351,11 @@ def test_compressors():
     if there are no levels implemented both minimum and maximum are
     -1.
     """
-    compressor_list={"paq8l":(1,8),"lzma":(-1,-1),"gzip":(1,9),"zip":(1,9),"bzip2":(1,9),"ppmd":(2,16),"spbio":(-1,-1)}
+    compressor_list={"paq8l":(1,8),"zip":(1,9),"ppmd":(2,16),"spbio":(-1,-1)}
     available={}
+    available["gzip"]=(1,9)
+    available["bzip2"]=(1,9)
+    available["lzma"]=(6,6)
     exec_path = os.environ.get("PATH")
     exec_path = exec_path.split(';')
     if len(exec_path)==1:

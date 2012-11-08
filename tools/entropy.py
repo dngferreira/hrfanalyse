@@ -113,7 +113,7 @@ def sampen(filename,args):
         file_data= file_d.readlines()
     if len(file_data)==0:
         return (0,0)
-    result = os.popen('./tools/sampen -r '+str(tolerance)+' -m '+str(dim) +' "'+filename+'"')
+    result = os.popen('%s -r %f -m %d "%s"'%(os.path.join('tools','sampen'),tolerance,dim,filename))
     result = result.readlines()
     result = result[dim].split('=')[1]
     return len(file_data),float(result)

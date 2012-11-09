@@ -116,7 +116,7 @@ def sampen(filename,args):
     result = os.popen('%s -r %f -m %d "%s"'%(os.path.join('tools','sampen'),tolerance,dim,filename))
     result = result.readlines()
     result = result[dim].split('=')[1]
-    return len(file_data),float(result)
+    return len(file_data),result.strip()
 
 
 def specen(filename,args):

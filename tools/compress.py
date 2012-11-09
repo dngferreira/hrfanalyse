@@ -45,8 +45,14 @@ import zlib
 import bz2
 try:
     import lzma
-except:
-    import pylzma as lzma
+    lzma_available=True
+except ImportError:
+    try:
+        import pylzma as lzma
+        lzma_available=True
+    except ImportError:
+        lzma_available=False
+        
 import timeit
 import time
 from collections import namedtuple
@@ -355,7 +361,8 @@ def test_compressors():
     available={}
     available["gzip"]=(1,9)
     available["bzip2"]=(1,9)
-    available["lzma"]=(6,6)
+    if lzma_available:
+        available["lzma"]=(6,6)
     exec_path = os.environ.get("PATH")
     exec_path = exec_path.split(';')
     if len(exec_path)==1:

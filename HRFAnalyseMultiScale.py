@@ -33,10 +33,9 @@ if __name__=="__main__":
     
     scales_dir = input_dir+'_Escalas'
 
-    if not os.path.isdir(scales_dir):
-        print "Creating Scales Directory"
-        tools.multiscale.multiscale(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"])
-        print "Scales Directory created"
+    print "Creating Scales Directory"
+    tools.multiscale.multiscale(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"])
+    print "Scales Directory created"
 
     if options["command"]=="compress":
         options["level"]=tools.compress.set_level(options)
@@ -89,10 +88,10 @@ if __name__=="__main__":
                                               options['dimension'],
                                               options['tolerance'])
                 if entropy_table=={}:
-                    entropy_table= dict((k,[round(entropy_results[k][1],5)]) for k in entropy_results)
+                    entropy_table= dict((k,[entropy_results[k][1]]) for k in entropy_results)
                 else:
                     for k in entropy_table:
-                        entropy_table[k].append(round(entropy_results[k][1],5))
+                        entropy_table[k].append(entropy_results[k][1])
 
             writer=csv.writer(open(outfile,"wb"),delimiter=";")
             header = ["Filename"]+[ "Escala%d Entropy"%s for s in xrange(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]

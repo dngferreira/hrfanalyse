@@ -34,10 +34,12 @@ This module's entry point funtion is multiscale(...)
 
 import os
 import numpy
+import compress
+import entropy
 
 #ENTRY POINT FUNCTION
 
-def multiscale(input_name,dest_dir,start,stop,step):
+def create_scales(input_name,dest_dir,start,stop,step):
     """
     Create all the scales in a given interval.
 
@@ -48,7 +50,7 @@ def multiscale(input_name,dest_dir,start,stop,step):
     Return: None
     """
     for scale in xrange(start,stop,step):
-        output_dir = os.path.join(dest_dir,"Escala %d"%scale)
+        output_dir = os.path.join(dest_dir,"Scale %d"%scale)
         if not os.path.isdir(output_dir):
             print "Creating Scale %d..."%scale
             os.makedirs(output_dir)
@@ -61,6 +63,55 @@ def multiscale(input_name,dest_dir,start,stop,step):
         else:
             create_scale(input_name.strip(),output_dir,scale)
 
+
+def multiscale_compression(input_name,start,stop,step,compressor,level,decompress):
+    if os.path.isdir(input_name):
+        compression_table={}
+        filelist = os.listdir(input_name)
+        for filename in filelist:
+            compression_table[filename] = []
+            for scale in xrange(start,stop,step):
+                file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
+                compression_results = compress.compress(file_to_compress,compressor,level,decompress)
+                compression_table[filename].append(compression_results[file_to_compress].original)
+                compression_table[filename].append(compression_results[file_to_compress].compressed)  
+                if decompress:
+                    compression_table[filename].append(compression_results[file_to_compress].time)  
+    else:
+        for scale in xrange(start,stop,step):
+            file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,input_name)
+            compression_results = compress.compress(file_to_compress,compressor,level,decompress)
+            compression_table[filename].append(compression_results[file_to_compress].original)
+            compression_table[filename].append(compression_results[file_to_compress].compressed)  
+            if decompress:
+                compression_table[filename].append(compression_results[file_to_compress].time)
+    return compression_table
+
+
+def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
+    entropy_table={}
+    if ( entropy_function=='apen' or
+         entropy_function=="sampen" ):
+        dim,tolerance = args
+        if os.path.isdir(input_name):
+            filelist= os.listdir(input_name)
+            files_stds = entropy.calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
+            tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
+            for filename in filelist:
+                entropy_table[filename]=[]
+                for scale in xrange(start,stop,step):
+                    file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
+                    entropy_results = entropy.apen(file_in_scale,dim,tolerances[filename])
+                    entropy_table[filename].append(entropy_results[1])
+        else:
+            files_stds = entropy.calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
+            tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
+            entropy_table[input_name]=[]
+            for scale in xrange(start,stop,step):
+                file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,input_name)
+                entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances[filename])
+                entropy_table[filename].append(entropy_results[1])
+    return entropy_table
 
 #IMPLEMENTATION
 def create_scale(inputfile, output_dir, scale):

@@ -68,34 +68,25 @@ def entropy(input_name,function,*function_args):
 
     method_to_call= getattr(sys.modules[__name__],function)
     entropy_dict={}
-    if os.path.isdir(input_name):
-        filelist = os.listdir(input_name)
-        for filename in filelist:
-            file_points,file_entropy = method_to_call(os.path.join(input_name,filename.strip()),function_args)
-            entropy_dict[filename.strip()] = (file_points,file_entropy)
-    else:
-        file_points,file_entropy = method_to_call(input_name.strip(),function_args)
-        entropy_dict[input_name.strip()] = (file_points,file_entropy)
+    if function=="apen" or function=="sampen":
+        dim, tolerances = function_args
+        if os.path.isdir(input_name):
+            filelist = os.listdir(input_name)
+            for filename in filelist:
+                file_points,file_entropy = method_to_call(os.path.join(input_name,filename.strip()),dim,tolerances[filename])
+                entropy_dict[filename.strip()] = (file_points,file_entropy)
+        else:
+            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances[input_name])
+            entropy_dict[input_name.strip()] = (file_points,file_entropy)
     return entropy_dict
 
 
 #IMPLEMENTATION
 
-def apen(filename,args):
+
+def apen(filename,dim,tolerance):
     file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    try:
-        dim, tolerance = args
-    except:
-        print "Error: Insuficient arguments to apply ap entropy"
-        exit
-    tolerance = tolerance*numpy.std(file_data)
+    file_data = file_d.readlines()
     return len(file_data),pyeeg.ap_entropy(file_data, dim, tolerance)
 
 # TODO
@@ -103,140 +94,111 @@ def apen(filename,args):
 #    Try the implementation described in this article http://www.sciencedirect.com/science/article/pii/S0169260710002956
 #
 
-def sampen(filename,args):
-    try:
-        dim, tolerance = args
-    except:
-        print "Error: Insuficient arguments to apply sample entropy"
-        exit
+def sampen(filename,dim,tolerance):
     with open(filename,'r') as file_d:
         file_data= file_d.readlines()
-    if len(file_data)==0:
-        return (0,0)
-    result = os.popen('%s -r %f -m %d "%s"'%(os.path.join('tools','sampen'),tolerance,dim,filename))
-    result = result.readlines()
-    result = result[dim].split('=')[1]
-    return len(file_data),result.strip()
+    # if len(file_data)==0:
+    #     return (0,0)
+    # result = os.popen('%s -r %f -m %d "%s"'%(os.path.join('tools','sampen'),tolerance,dim,filename))
+    # result = result.readlines()
+    # result = result[dim].split('=')[1]
+    #    return len(file_data),result.strip()
+    return len(file_data),pyeeg.samp_entropy(file_data,dim,tolerance)
+
+# def specen(filename,args):
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     try:
+#         Band, Fs = args
+#     except:
+#         print "Error: Insuficient arguments to apply spectral entropy"
+#         exit
+#     return len(file_data),pyeeg.spectral_entropy(file_data, Band, Fs)
+
+# def hurst(filename,args):
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     return len(file_data),pyeeg.hurst(file_data)
+
+# def dfa(filename,args):
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     return len(file_data),pyeeg.dfa(file_data)
 
 
-def specen(filename,args):
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    try:
-        Band, Fs = args
-    except:
-        print "Error: Insuficient arguments to apply spectral entropy"
-        exit
-    return len(file_data),pyeeg.spectral_entropy(file_data, Band, Fs)
+# def hjorth(filename,args):
+#     file_d = open(filename,"r")
+#     file_data = []
+#     for line in file_d:
+#         if len(line.split())==2:
+#             time, hrf = line.split()
+#         else:
+#             hrf = line
+#         file_data.append(float(hrf))
+#     return len(file_data),pyeeg.hjorth(file_data)
 
-def hurst(filename,args):
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    return len(file_data),pyeeg.hurst(file_data)
+# def pfd(filename,args):
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     return len(file_data),pyeeg.pfd(file_data)
 
-def dfa(filename,args):
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    return len(file_data),pyeeg.dfa(file_data)
+# def hfd(filename,args):
+#     try:
+#         kmax = args[0]
+#     except:
+#         print "Error: Insuficient arguments to apply hfd"
+#         exit
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     return len(file_data),pyeeg.hfd(file_data,kmax)
 
 
-def hjorth(filename,args):
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    return len(file_data),pyeeg.hjorth(file_data)
+# def fi(filename,args):
+#     try:
+#         dim,tau = args
+#     except:
+#         print "Error: Insuficient arguments to apply fi"
+#         exit
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     seq = pyeeg.embed_seq(file_data, tau, dim)
+#     w = numpy.linalg.svd(seq, compute_uv=0)
+#     w /= sum(w)
+#     return len(file_data),pyeeg.fisher_info(file_data, tau, dim, w)
 
-def pfd(filename,args):
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    return len(file_data),pyeeg.pfd(file_data)
-
-def hfd(filename,args):
-    try:
-        kmax = args[0]
-    except:
-        print "Error: Insuficient arguments to apply hfd"
-        exit
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    return len(file_data),pyeeg.hfd(file_data,kmax)
-
-
-def fi(filename,args):
-    try:
-        dim,tau = args
-    except:
-        print "Error: Insuficient arguments to apply fi"
-        exit
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    seq = pyeeg.embed_seq(file_data, tau, dim)
-    w = numpy.linalg.svd(seq, compute_uv=0)
-    w /= sum(w)
-    return len(file_data),pyeeg.fisher_info(file_data, tau, dim, w)
-
-def svden(filename,args):
-    try:
-        dim,tau = args
-    except:
-        print "Error: Insuficient arguments to apply fi"
-        exit
-    file_d = open(filename,"r")
-    file_data = []
-    for line in file_d:
-        if len(line.split())==2:
-            time, hrf = line.split()
-        else:
-            hrf = line
-        file_data.append(float(hrf))
-    seq = pyeeg.embed_seq(file_data, tau, dim)
-    w = numpy.linalg.svd(seq, compute_uv=0)
-    w /= sum(w)
-    return len(file_data),pyeeg.svd_entropy(file_data, tau, dim, w)
+# def svden(filename,args):
+#     try:
+#         dim,tau = args
+#     except:
+#         print "Error: Insuficient arguments to apply fi"
+#         exit
+#     file_d = open(filename,"r")
+#     file_data = file_d.readlines()
+#     seq = pyeeg.embed_seq(file_data, tau, dim)
+#     w = numpy.linalg.svd(seq, compute_uv=0)
+#     w /= sum(w)
+#     return len(file_data),pyeeg.svd_entropy(file_data, tau, dim, w)
 
 
 #AUXILIARY FUNCTIONS
+
+def calculate_std(input_name):
+    if os.path.isdir(input_name):
+        filelist = os.listdir(input_name)
+        files_std = {}
+        for filename in filelist:
+            files_std[filename] = calculate_file_std(os.path.join(input_name,filename))
+    else:
+        files_std[input_name]=[calculate_file_std(input_name)]
+    return files_std
+
+def calculate_file_std(filename):
+    file_d = open(filename,"r")
+    file_data = file_d.readlines()
+    file_data = map(float,file_data)
+    return numpy.std(file_data)
+
+
 
 def add_parser_options(parser):
     """
@@ -258,24 +220,24 @@ def add_parser_options(parser):
     ap_en.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",default=0.1)
     ap_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
 
-    spec_en = entropy_parsers.add_parser('specen', help="Spectral Entropy")
+    # spec_en = entropy_parsers.add_parser('specen', help="Spectral Entropy")
 
-    hurst_en = entropy_parsers.add_parser('hurst', help="Hurst Exponent")
+    # hurst_en = entropy_parsers.add_parser('hurst', help="Hurst Exponent")
 
-    dfa_en = entropy_parsers.add_parser('dfa', help="Detrended Fluctuation Analysis")
+    # dfa_en = entropy_parsers.add_parser('dfa', help="Detrended Fluctuation Analysis")
 
-    hjorth_en = entropy_parsers.add_parser('hjorth', help="Hjorth Mobility and Complexity")
+    # hjorth_en = entropy_parsers.add_parser('hjorth', help="Hjorth Mobility and Complexity")
     
-    pfd_en = entropy_parsers.add_parser('pfd', help="Petrosian Fractal Dimension")
+    # pfd_en = entropy_parsers.add_parser('pfd', help="Petrosian Fractal Dimension")
 
-    hfd_en = entropy_parsers.add_parser('hfd', help="Higuchi Fractal Dimension")
-    hfd_en.add_argument('-k','--kmax',dest="kmax",type=int,action="store",metavar="KMAX",help="Value of Kmax. [default:%(default)s]",default=5)
+    # hfd_en = entropy_parsers.add_parser('hfd', help="Higuchi Fractal Dimension")
+    # hfd_en.add_argument('-k','--kmax',dest="kmax",type=int,action="store",metavar="KMAX",help="Value of Kmax. [default:%(default)s]",default=5)
 
-    fi_en = entropy_parsers.add_parser('fi', help="Fisher Information")
-    fi_en.add_argument('-t','--tau',dest="tau",type=int,action="store",metavar="TAU",help="Value of Tau. [default:%(default)s]",default=4)
-    fi_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="DIMENSION",help="Dimension. [default:%(default)s]",default=10)
+    # fi_en = entropy_parsers.add_parser('fi', help="Fisher Information")
+    # fi_en.add_argument('-t','--tau',dest="tau",type=int,action="store",metavar="TAU",help="Value of Tau. [default:%(default)s]",default=4)
+    # fi_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="DIMENSION",help="Dimension. [default:%(default)s]",default=10)
 
-    svd_en = entropy_parsers.add_parser('svden', help="Singular Value Decomposition Entropy")
-    svd_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="DIMENSION",help="Dimension. [default:%(default)s]",default=10)
-    svd_en.add_argument('-t','--tau',dest="tau",type=int,action="store",metavar="TAU",help="Value of Tau. [default:%(default)s]",default=4)
+    # svd_en = entropy_parsers.add_parser('svden', help="Singular Value Decomposition Entropy")
+    # svd_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="DIMENSION",help="Dimension. [default:%(default)s]",default=10)
+    # svd_en.add_argument('-t','--tau',dest="tau",type=int,action="store",metavar="TAU",help="Value of Tau. [default:%(default)s]",default=4)
     

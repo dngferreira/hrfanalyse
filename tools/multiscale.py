@@ -101,8 +101,8 @@ def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
                 entropy_table[filename]=[]
                 for scale in xrange(start,stop,step):
                     file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                    entropy_results = entropy.apen(file_in_scale,dim,tolerances[filename])
-                    entropy_table[filename].append(entropy_results[1])
+                    entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances[filename])
+                    entropy_table[filename].append(entropy_results[file_in_scale][1])
         else:
             files_stds = entropy.calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
             tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)

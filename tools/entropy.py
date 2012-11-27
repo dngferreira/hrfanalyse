@@ -76,7 +76,7 @@ def entropy(input_name,function,*function_args):
                 file_points,file_entropy = method_to_call(os.path.join(input_name,filename.strip()),dim,tolerances[filename])
                 entropy_dict[filename.strip()] = (file_points,file_entropy)
         else:
-            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances[input_name])
+            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances)
             entropy_dict[input_name.strip()] = (file_points,file_entropy)
     return entropy_dict
 
@@ -85,8 +85,9 @@ def entropy(input_name,function,*function_args):
 
 
 def apen(filename,dim,tolerance):
-    file_d = open(filename,"r")
-    file_data = file_d.readlines()
+    with open(filename,"r") as file_d:
+        file_data = file_d.readlines()
+    file_data = map(float,file_data)
     return len(file_data),pyeeg.ap_entropy(file_data, dim, tolerance)
 
 # TODO
@@ -97,6 +98,7 @@ def apen(filename,dim,tolerance):
 def sampen(filename,dim,tolerance):
     with open(filename,'r') as file_d:
         file_data= file_d.readlines()
+    file_data=map(float,file_data)
     # if len(file_data)==0:
     #     return (0,0)
     # result = os.popen('%s -r %f -m %d "%s"'%(os.path.join('tools','sampen'),tolerance,dim,filename))

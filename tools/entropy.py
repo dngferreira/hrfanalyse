@@ -68,7 +68,7 @@ def entropy(input_name,function,*function_args):
 
     method_to_call= getattr(sys.modules[__name__],function)
     entropy_dict={}
-    if function=="apen" or function=="sampen":
+    if function=="apen" or function=="apenv2" or function=="sampen":
         dim, tolerances = function_args
         if os.path.isdir(input_name):
             filelist = os.listdir(input_name)
@@ -76,7 +76,7 @@ def entropy(input_name,function,*function_args):
                 file_points,file_entropy = method_to_call(os.path.join(input_name,filename.strip()),dim,tolerances[filename])
                 entropy_dict[filename.strip()] = (file_points,file_entropy)
         else:
-            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances)
+            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances[tolerances.keys()[0]])
             entropy_dict[input_name.strip()] = (file_points,file_entropy)
     return entropy_dict
 
@@ -89,6 +89,47 @@ def apen(filename,dim,tolerance):
         file_data = file_d.readlines()
     file_data = map(float,file_data)
     return len(file_data),pyeeg.ap_entropy(file_data, dim, tolerance)
+
+def apenv2(filename,dim,tolerance):
+    with open(filename,"r") as file_d:
+        file_data = file_d.readlines()
+    file_data = map(float,file_data)
+
+    data_len = len(file_data)
+
+
+    Cm, Cmp = numpy.ones(data_len - dim + 1), numpy.ones(data_len - dim)
+    i=0
+    while i<data_len-dim+1:
+        j=i+1
+        while j< data_len-dim+1:
+            si=0
+            for m in xrange(dim):
+                if abs(file_data[i+m]-file_data[j+m])<=tolerance:
+                    si+=1
+                else:
+                    break
+            if si==dim:
+                Cm[i]+=1
+                Cm[j]+=1
+                if i<data_len-dim and j<data_len-dim:
+                    Cmp[i]+=1
+                    Cmp[j]+=1
+                    if abs(file_data[i+dim]-file_data[j+dim])>R:
+                        Cmp[i]-=1
+                        Cmp[j]-=1
+            j+=1
+        i+=1
+
+
+    Cm = [line/(data_len-dim+1) for line in Cm]
+    Cmp = [line/(data_len-dim) for line in Cmp]
+
+    Phi_m, Phi_mp = numpy.mean([numpy.log(pos) for pos in Cm]) , numpy.mean([numpy.log(pos) for pos in Cmp])
+
+    Ap_En = Phi_m - Phi_mp
+
+    return len(file_data),Ap_En
 
 # TODO
 # def fast_apen(filename,args):
@@ -185,13 +226,13 @@ def sampen(filename,dim,tolerance):
 #AUXILIARY FUNCTIONS
 
 def calculate_std(input_name):
+    files_std = {}
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
-        files_std = {}
         for filename in filelist:
             files_std[filename] = calculate_file_std(os.path.join(input_name,filename))
     else:
-        files_std[input_name]=[calculate_file_std(input_name)]
+        files_std[input_name]=calculate_file_std(input_name)
     return files_std
 
 def calculate_file_std(filename):
@@ -221,6 +262,10 @@ def add_parser_options(parser):
     ap_en = entropy_parsers.add_parser('apen', help="Aproximate Entropy")
     ap_en.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",default=0.1)
     ap_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
+
+    ap_en_v2 = entropy_parsers.add_parser('apenv2', help="Aproximate Entropy version 2")
+    ap_en_v2.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",default=0.1)
+    ap_en_v2.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
 
     # spec_en = entropy_parsers.add_parser('specen', help="Spectral Entropy")
 

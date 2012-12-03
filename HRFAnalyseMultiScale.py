@@ -62,7 +62,7 @@ if __name__=="__main__":
             writer.writerow([filename]+compression_table[filename])
         
     elif options["command"]=="entropy":
-        if (options['entropy']=='apen' or options['entropy']=="sampen"):
+        if (options['entropy']=='apen' or options['entropy']=='apenv2' or options['entropy']=="sampen"):
             outfile="%s_multiscale_%d_%d_%d_%s%d%.2f.csv"%(input_dir, 
                                                            options["scale_start"], 
                                                            options["scale_stop"], 

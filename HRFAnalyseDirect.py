@@ -262,7 +262,8 @@ if __name__=="__main__":
             writer.writerow(data_row)
         
     elif options['command']=='entropy':
-        if ((options['entropy']=='apen') or 
+        if ((options['entropy']=='apen') or
+            (options['entropy']=='apenv2') or
             (options['entropy']=='sampen')):
             files_stds = tools.entropy.calculate_std(inputdir)
             print files_stds

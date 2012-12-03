@@ -660,7 +660,6 @@ def ap_entropy(X, M, R):
 #		if max(abs(Em[N-M]-Em[N-M])) <= R: # index from 0, so N-M+1 is N-M  v 0.01b_r1
 #	if in_range(Em[i], Em[N - M], R):  # for Cm, there is one more iteration than Cmp
 #			Cm[N - M] += 1 # cross-matches on Cm[N - M]
-	
 	Cm[N - M] += 1 # Cm[N - M] self-matches
 #	import code;code.interact(local=locals())
 	Cm /= (N - M +1 )

@@ -76,7 +76,9 @@ def entropy(input_name,function,*function_args):
                 file_points,file_entropy = method_to_call(os.path.join(input_name,filename.strip()),dim,tolerances[filename])
                 entropy_dict[filename.strip()] = (file_points,file_entropy)
         else:
-            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances[tolerances.keys()[0]])
+            if type(tolerances)==dict:
+                tolerances=tolerances[tolerances.keys()[0]]
+            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances)
             entropy_dict[input_name.strip()] = (file_points,file_entropy)
     return entropy_dict
 

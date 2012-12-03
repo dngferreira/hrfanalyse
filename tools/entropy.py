@@ -115,7 +115,7 @@ def apenv2(filename,dim,tolerance):
                 if i<data_len-dim and j<data_len-dim:
                     Cmp[i]+=1
                     Cmp[j]+=1
-                    if abs(file_data[i+dim]-file_data[j+dim])>R:
+                    if abs(file_data[i+dim]-file_data[j+dim])>tolerance:
                         Cmp[i]-=1
                         Cmp[j]-=1
             j+=1

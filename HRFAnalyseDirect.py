@@ -266,7 +266,6 @@ if __name__=="__main__":
             (options['entropy']=='apenv2') or
             (options['entropy']=='sampen')):
             files_stds = tools.entropy.calculate_std(inputdir)
-            print files_stds
             tolerances = dict((filename,files_stds[filename]*options["tolerance"]) for filename in files_stds)
             resulting_dict = tools.entropy.entropy(inputdir, 
                                                    options['entropy'],

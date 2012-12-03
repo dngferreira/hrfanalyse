@@ -90,7 +90,7 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
 
 def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
     entropy_table={}
-    if ( entropy_function=='apen' or
+    if ( entropy_function=='apen' or entropy_function=='apenv2'or
          entropy_function=="sampen" ):
         dim,tolerance = args
         if os.path.isdir(input_name):
@@ -105,12 +105,13 @@ def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
                     entropy_table[filename].append(entropy_results[file_in_scale][1])
         else:
             files_stds = entropy.calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
-            tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
+            tolerances = [ files_stds[filename]*tolerance for filename in files_stds]
             entropy_table[input_name]=[]
+            filename = os.path.basename(input_name)
             for scale in xrange(start,stop,step):
-                file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,input_name)
-                entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances[filename])
-                entropy_table[filename].append(entropy_results[1])
+                file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
+                entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances)
+                entropy_table[input_name].append(entropy_results[1])
     return entropy_table
 
 #IMPLEMENTATION

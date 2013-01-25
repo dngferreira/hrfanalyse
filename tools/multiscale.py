@@ -56,6 +56,7 @@ def create_scales(input_name,dest_dir,start,stop,step):
             os.makedirs(output_dir)
         else: 
             print "Scale %d exists, skipping..."%scale
+            continue
         if os.path.isdir(input_name):
             filelist = os.listdir(input_name)
             for filename in filelist:

@@ -31,6 +31,9 @@ This module's entry point function in clean(...)
 """
 
 import os
+import logging
+
+module_logger=logging.getLogger('hrfanalyse.clean')
 
 #ENTRY POINT FUNCTIONS
 
@@ -52,6 +55,7 @@ def clean(input_name,dest_dir,keep_time=False, apply_limits=False):
     the file.
 
     """
+    module_logger.debug("The dir name received: %s"%input_name)
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
@@ -85,9 +89,9 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
         with open(dest_file,"w") as fdout:
             for line in fdin:
                 data =  line.split()
-                #to clean any headers the file might have, this works
-                #because headers never start with a number.
                 
+                #to clean any headers the file might have, this operates under the assumtion
+                #headers never start with a number.
                 try:
                     float(data[0])
                 except ValueError:
@@ -96,17 +100,16 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
                     hrf = float(data[1])
                     if(hrf >= 1000):
                         hrf = float(data[1])/1000
-                    if apply_limits :
-                        if hrf>= 50 and hrf<=250:
-                            if keep_time:
-                                time = data[0]
-                                fdout.write("%s "%time)
-                            fdout.write("%d\n"%hrf)
+                    if apply_limits and hrf>= 50 and hrf<=250:
+                        if keep_time:
+                            time = data[0]
+                            fdout.write("%s "%time)
+                        fdout.write("%.3f\n"%hrf)
                     else:
                         if keep_time:
                             time = data[0]
                             fdout.write("%s "%time)
-                        fdout.write("%d\n"%hrf)    
+                        fdout.write("%.3f\n"%hrf)    
                         
 
 

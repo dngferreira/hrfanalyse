@@ -170,11 +170,59 @@ import tools.compress
 import tools.partition
 import tools.entropy
 import csv
+import logging
+
+def partition_procedures(inputdir,options):
+    if options['start_at_end']:
+        outputdir = "%s_last_%d_%d" %(inputdir,options['partition_start'],options['partition_interval'])
+    else:
+        outputdir = "%s_%d_%d" %(inputdir,options['partition_start'],options['partition_interval'])
+
+    if not os.path.isdir(outputdir):
+        logger.info("Creating %s for partitions"%outputdir)
+        os.makedirs(outputdir)
+    logger.info("Starting partition")
+    if options['using_lines']:
+        tools.partition.partition_chunk(inputdir,
+                                        outputdir,
+                                        "using_lines",
+                                        options['partition_start'],
+                                        options['partition_interval'],
+                                        start_at_end=options['start_at_end'])
+    else:
+        tools.partition.partition_chunk(inputdir,
+                                        outputdir,
+                                        "using_time",
+                                        options['partition_start']*60,
+                                        options['partition_interval']*60,
+                                        start_at_end=options['start_at_end'])
+    logger.info("Finished partitioning")
+    return outputdir
+
+
+def clean_procedures(inputdir, options):
+    if not os.path.isdir(inputdir):
+        outputdir = os.path.dirname(inputdir)+"_clean"
+    else:
+        outputdir = inputdir+"_clean"
+    if not os.path.isdir(outputdir):
+        logger.info("Creating clean directory %s"%outputdir)
+        os.makedirs(outputdir)
+    logger.info("Starting clean procedures")
+    if options['keep_time'] or options['partition_interval']:
+        tools.clean.clean(inputdir,outputdir,keep_time=True,apply_limits=options['apply_limits'])
+    else:
+        tools.clean.clean(inputdir,outputdir,apply_limits=options['apply_limits'])
+    logger.info("Finished clean procedures")
+    return outputdir
+
 
 if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description="Generates a table of file compression/entrop for a given directory")
     parser.add_argument("inputdir",metavar="INPUT DIRECTORY",help="Directory or case file to be used as input",action="store")
+    parser.add_argument("-l","--log",action="store",metavar="LOGFILE",default=None,dest="log_file",help="Use LOGFILE to save logs.")
+    parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
 
     subparsers = parser.add_subparsers(help='Diferent commands to be run on directory', dest="command")
 
@@ -188,8 +236,11 @@ if __name__=="__main__":
     entropy = subparsers.add_parser('entropy', help='calculate entropy for all the files in the given directory')
     tools.entropy.add_parser_options(entropy)
 
-    
+
+
     #These values come from pyeeg's file i'm not sure what they mean or how they should be used
+
+
     Fs = 173
     Band = [2*i+1 for i in xrange(0, 43)]		## 0.5~85 Hz
 
@@ -197,44 +248,29 @@ if __name__=="__main__":
     args = parser.parse_args()
     options = vars(args)
 
+
+    logger = logging.getLogger('hrfanalyse')
+    logger.setLevel(getattr(logging,options['log_level']))
+
+    if(options['log_file']==None):
+        log_output = logging.StreamHandler()
+    else:
+        log_output = logging.FileHandler(options['log_file'])
+    log_output.setLevel(getattr(logging,options['log_level']))
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    log_output.setFormatter(formatter)
+    logger.addHandler(log_output)
+
     inputdir = options['inputdir'].strip()
 
     if inputdir.endswith('/'):
         inputdir = inputdir[:-1]
 
     if options['command']=='clean':
-        if not os.path.isdir(inputdir):
-            outputdir = os.path.dirname(inputdir)+"_clean"
-        else:
-            outputdir = inputdir+"_clean"
-        if not os.path.isdir(outputdir):
-            os.makedirs(outputdir)
-        if options['keep_time'] or options['partition_interval']:
-            tools.clean.clean(inputdir,outputdir,keep_time=True,apply_limits=options['apply_limits'])
-        else:
-            tools.clean.clean(inputdir,outputdir,apply_limits=options['apply_limits'])
-        inputdir=outputdir
+        outputdir = clean_procedures(inputdir,options)
         if options['partition_interval']:
-            if options['start_at_end']:
-                outputdir = "%s_-%d_%d" %(inputdir,options['partition_start'],options['partition_interval'])
-            else:
-                outputdir = "%s_%d_%d" %(inputdir,options['partition_start'],options['partition_interval'])
-            if not os.path.isdir(outputdir):
-                os.makedirs(outputdir)
-            if options['using_lines']:
-                tools.partition.partition_chunk(inputdir,
-                                                outputdir,
-                                                "using_lines",
-                                                options['partition_start'],
-                                                options['partition_interval'],
-                                                start_at_end=options['start_at_end'])
-            else:
-                tools.partition.partition_chunk(inputdir,
-                                                outputdir,
-                                                "using_time",
-                                                options['partition_start']*60,
-                                                options['partition_interval']*60,
-                                                start_at_end=options['start_at_end'])
+            outputdir = partition_procedures(outputdir,options)
+        inputdir = outputdir
 
     if not os.path.isdir(inputdir):
         output_name = "%s_%s"%(os.path.split(inputdir)[0],os.path.basename(inputdir))
@@ -305,3 +341,6 @@ if __name__=="__main__":
         for filename in sorted(resulting_dict.keys()):
             file_points, file_entropy = resulting_dict[filename]
             writer.writerow([filename,file_entropy])        
+
+
+

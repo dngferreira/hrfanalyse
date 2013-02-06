@@ -2,3 +2,5 @@ syntax:glob
 *.{pyc,pyo}
 *~
 unittest_dataset_*
+.sonar/
+sonar-project.properties

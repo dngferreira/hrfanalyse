@@ -36,6 +36,9 @@ import os
 import numpy
 import compress
 import entropy
+import logging
+
+module_logger=logging.getLogger('hrfanalyse.multiscale')
 
 #ENTRY POINT FUNCTION
 
@@ -52,10 +55,10 @@ def create_scales(input_name,dest_dir,start,stop,step):
     for scale in xrange(start,stop,step):
         output_dir = os.path.join(dest_dir,"Scale %d"%scale)
         if not os.path.isdir(output_dir):
-            print "Creating Scale %d..."%scale
+            module_logger.info("Creating Scale %d..."%scale)
             os.makedirs(output_dir)
         else: 
-            print "Scale %d exists, skipping..."%scale
+            module_logger.warning("Scale %d exists, skipping..."%scale)
             continue
         if os.path.isdir(input_name):
             filelist = os.listdir(input_name)

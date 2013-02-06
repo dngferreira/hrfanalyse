@@ -7,10 +7,15 @@ import operator
 import tools.multiscale
 import tools.compress
 import tools.entropy
+import logging
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Generates a tables of file multiscaled compression/entropy")
     parser.add_argument("inputdir",metavar="INPUT DIRECTORY", help="Directory to be used as input")
+    parser.add_argument("--log",action="store",metavar="LOGFILE",default=None,dest="log_file",help="Use LOGFILE to save logs.")
+    parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
+
+
     tools.multiscale.add_parser_options(parser)
 
     commands = parser.add_subparsers(help="MultiScale using compression or entropy",dest="command")
@@ -26,16 +31,28 @@ if __name__=="__main__":
     args = parser.parse_args()
     options = vars(args)
 
+    logger = logging.getLogger('hrfanalyse-direct')
+    logger.setLevel(getattr(logging,options['log_level']))
+
+    if(options['log_file']==None):
+        log_output = logging.StreamHandler()
+    else:
+        log_output = logging.FileHandler(options['log_file'])
+    log_output.setLevel(getattr(logging,options['log_level']))
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    log_output.setFormatter(formatter)
+    logger.addHandler(log_output)
+
     input_dir= options['inputdir'].strip()
 
     if input_dir.endswith('/'):
         input_dir = input_dir[:-1]
     
-    scales_dir = input_dir+'_Scales'
+    scales_dir = '%s_Scales'%input_dir
 
-    print "Creating Scales Directory"
+    logger.info("Creating Scales Directory")
     tools.multiscale.create_scales(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"])
-    print "Scales Directory created"
+    logger.info("Scales Directory created")
 
     if options["command"]=="compress":
         options["level"]=tools.compress.set_level(options)
@@ -87,6 +104,6 @@ if __name__=="__main__":
             for filename in sorted(entropy_table.keys()):
                 writer.writerow([filename]+entropy_table[filename])            
         else:
-            print "Multiscale not implemented for %s"%options["entropy"]
+            logger.error("Multiscale not implemented for %s"%options["entropy"])
 
     

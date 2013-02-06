@@ -43,8 +43,11 @@ There are two entry point functions to this module:
 import os
 import sys
 import pickle
- 
-#I had absolutly no rational reason to choose this number
+import logging 
+
+module_logger=logging.getLogger('hrfanalyse.partition')
+
+#This number was randomly chosen, no meaning to it
 SAMPLE_SIZE=42
 
 #ENTRY POINT FUNCTIONS
@@ -98,11 +101,16 @@ def partition_blocks(input_name,dest_dir,section_secs,gap_secs):
         for filename in filelist:
             file_block_dir = os.path.join(dest_dir,"%s_blocks"%filename.strip())
             if(not os.path.isdir(file_block_dir)):
-                print "Creating ",file_block_dir,"..."
+                module_logger.info("Creating %s!"%file_block_dir)
                 os.makedirs(file_block_dir)
             blocks_times[filename.strip()] = partition_file_blocks(os.path.join(input_name,filename.strip()),file_block_dir,section_secs,gap_secs)
     else:
-        blocks_times[input_name.strip()] = partition_file_blocks(input_name.strip(),dest_dir,section_secs,gap_secs)
+        filename = os.path.basename(input_name.strip())
+        file_block_dir = os.path.join(dest_dir,"%s_blocks"%filename)
+        if(not os.path.isdir(file_block_dir)):
+            module_logger.info("Creating %s!"%file_block_dir)
+            os.makedirs(file_block_dir)
+        blocks_times[filename] = partition_file_blocks(input_name.strip(),file_block_dir,section_secs,gap_secs)
     return blocks_times
 
 
@@ -129,9 +137,9 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
 
     filename = os.path.basename(inputfile)
     time_elapsed=0
+    real_end = 0
     real_start = 0
     next_real_start=0
-    real_end = 0
     line_index=0
     k=1
     block_minuts = []
@@ -150,20 +158,7 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
                 section_test = time_elapsed+time_stamp <= section_secs*1000
             if section_test:
                 fdpart.write("%s\n"%hrf)
-                if cumulative:
-                    real_end = float(time)-time_stamp
-                    gap_test = abs(float(time)-time_stamp) <= k*gap_secs
-                else:
-                    real_end += float(time)/1000
-                    gap_test = time_elapsed+time_stamp <= gap_secs*1000
-                    time_elapsed += time_stamp
-                if gap_test:
-                    next_partition_start +=1 
-                    if cumulative:
-                        next_real_start=float(time)-time_stamp
-                    else:
-                        next_real_start+=float(time)/1000
-                line_index+=1
+                line_index, time_elapsed, real_end, next_partition_start, next_real_start = set_time_varibles(line_index, time, time_elapsed, time_stamp, k, gap_secs, next_partition_start, next_real_start, real_end, cumulative)
                 if line_index>=len(lines):
                     break
             else:
@@ -180,6 +175,23 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
     block_minuts.append((real_start,real_end))
     fdpart.close()
     return block_minuts
+
+def set_time_varibles(line_index, time, time_elapsed, time_stamp, k, gap_secs, next_partition_start, next_real_start, real_end, cumulative):
+    if cumulative:
+        real_end = float(time)-time_stamp
+        gap_test = abs(float(time)-time_stamp) <= k*gap_secs
+    else:
+        real_end += float(time)/1000
+        gap_test = time_elapsed+time_stamp <= gap_secs*1000
+        time_elapsed += time_stamp
+    if gap_test:
+        next_partition_start +=1 
+        if cumulative:
+            next_real_start=float(time)-time_stamp
+        else:
+            next_real_start+=float(time)/1000
+        line_index+=1
+    return (line_index, time_elapsed, real_end, next_partition_start, next_real_start)
 
 
 def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at_end):
@@ -212,58 +224,28 @@ def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at
         #empty files return imediatly
         if len(lines)==0:
             return
+        
+        line_index, interval, cumulative, time_stamp = initialize_partition_variables(lines,init_seconds, start_at_end, interval)
 
-        if start_at_end:
-            line_index=-1
-        else:
-            line_index=0
-
-        if interval!=-1:
-            interval=init_seconds+interval
-        else:
-            interval=sys.maxint
-            
-        if start_at_end:
-            cumulative, time_stamp = sniffer(lines[-SAMPLE_SIZE:])
-        else:
-            cumulative, time_stamp = sniffer(lines[:SAMPLE_SIZE])
-
+        module_logger.debug("Initialization -- line_index: %d;interval: %d; cumulative:%d; time_stamp:%d"%(line_index,interval,cumulative,time_stamp))
             
     #If the init time in not 0 jump to that point in time, the cursor
     #is moved to exactly the start of the requested interval
 
+        time_elapsed, line_index = jump_to_partition_init(lines,line_index, init_seconds, cumulative, start_at_end, time_stamp)
+
+        module_logger.debug("After the Jump -- time_elapsed:%d; line_index: %d"%(time_elapsed,line_index))
+
+  
+    #write the data to the outfile until the end of the requested interval is reached
         time, hrf = lines[line_index].split()
 
-        time_elapsed = 0
-        if init_seconds!=0:
-            if cumulative:
-                jump_to_init_test = abs(float(time)-time_stamp) < init_seconds
-            else:
-                jump_to_init_test = time_elapsed+time_stamp < init_seconds*1000
-            while jump_to_init_test:
-                if start_at_end:
-                    line_index-=1
-                else:
-                    line_index+=1
-                if abs(line_index) >=len(lines):
-                    break
-                try:
-                    time, hrf = lines[line_index].split()
-                except IndexError:
-                    return                     
-                if cumulative:
-                    jump_to_init_test = abs(float(time)-time_stamp) < init_seconds
-                else:
-                    time_elapsed += time_stamp
-                    jump_to_init_test = time_elapsed + time_stamp < init_seconds*1000
-  
-#write the data to the outfile until the end of the requested interval is reached
         with open(os.path.join(dest_dir,filename),"w") as fdout:
             data = ""
             if cumulative:
                 partition_test = abs(float(time)-time_stamp) <= interval
             else:
-                partition_test = time_elapsed+ time_stamp <= interval*1000
+                partition_test = time_elapsed+time_stamp <= interval*1000
             while partition_test:
 #                s=hrf+'\n'
                 s = "%s %s\n"%(time,hrf)
@@ -288,6 +270,52 @@ def partition_chunk_using_time(inputfile,dest_dir,init_seconds,interval,start_at
                     partition_test = time_elapsed + time_stamp <= interval*1000
             fdout.write(data)
             
+#AUXILARY FUNCTIONS FOR PARTITIONS BASED ON TIME
+def initialize_partition_variables(lines,init_seconds, start_at_end,interval):
+    if start_at_end:
+        line_index=-1
+    else:
+        line_index=0
+        
+    if interval!=-1:
+        interval=init_seconds+interval
+    else:
+        interval=sys.maxint
+            
+    if start_at_end:
+        cumulative, time_stamp = sniffer(lines[-SAMPLE_SIZE:],start_at_end)
+    else:
+        cumulative, time_stamp = sniffer(lines[:SAMPLE_SIZE],start_at_end)
+
+    return (line_index, interval, cumulative, time_stamp)
+
+def jump_to_partition_init(lines, line_index, init_seconds, cumulative, start_at_end, time_stamp):
+    time, hrf = lines[line_index].split()
+
+    time_elapsed = 0
+    if init_seconds!=0:
+        if cumulative:
+            jump_to_init_test = abs(float(time)-time_stamp) < init_seconds
+        else:
+            jump_to_init_test = time_elapsed+time_stamp < init_seconds*1000
+        while jump_to_init_test:
+            if start_at_end:
+                line_index-=1
+            else:
+                line_index+=1
+            if abs(line_index) >=len(lines):
+                break
+            try:
+                time, hrf = lines[line_index].split()
+            except IndexError:
+                return                     
+            if cumulative:
+                jump_to_init_test = abs(float(time)-time_stamp) < init_seconds
+            else:
+                time_elapsed += time_stamp
+                jump_to_init_test = time_elapsed + time_stamp < init_seconds*1000
+    return time_elapsed, line_index    
+
 
 def partition_chunk_using_lines(inputfile,dest_dir,init_line,interval,start_at_end):
     """
@@ -347,7 +375,7 @@ def partition_chunk_using_lines(inputfile,dest_dir,init_line,interval,start_at_e
 #AUXILIARY FUNCTIONS
 
 
-def sniffer(lines):
+def sniffer(lines,start_at_end=False):
     """
     !!!Auxiliary function!!!
     Recieves a sample of the file and extrapolates whether the
@@ -365,9 +393,12 @@ def sniffer(lines):
     """
     times={}
     crescent=0
-    first_stamp = lines[0].split()[0]
+    if start_at_end:
+        first_stamp = lines[-1].split()[0]
+    else:
+        first_stamp = lines[0].split()[0]
+    previous_time= lines[0].split()[0]
     moda_count = 0
-    moda = '0'
     for line in lines:
         try:
             time,hrf = line.split()
@@ -377,8 +408,9 @@ def sniffer(lines):
             times[time]+=1
         else:
             times[time]=1
-        if time>first_stamp:
+        if time>previous_time:
             crescent+=1
+            previous_time=time
     if crescent==len(lines)-1:
         cumulative=True
         time_stamp=first_stamp

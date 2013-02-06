@@ -34,16 +34,18 @@ import tools.separate_blocks
 import os
 import sys
 import csv
+import logging
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Analysis of the file's blocks")
     parser.add_argument("inputfile",metavar="INPUT FILE",help="File to be analysed")
+    parser.add_argument("--log",action="store",metavar="LOGFILE",default=None,dest="log_file",help="Use LOGFILE to save logs.")
+    parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
+
     
     tools.partition.add_parser_options_blocks(parser)
     
     tools.compress.add_parser_options(parser)
-
-    parser.add_argument("-pbc","--block-compression",action="store_true",default=False,help="Print block compression per file")
 
     tools.separate_blocks.add_parser_options(parser)
         
@@ -51,40 +53,53 @@ if __name__=="__main__":
     args = parser.parse_args()
     options=vars(args)
     
+
+    logger = logging.getLogger('hrfanalyse')
+    logger.setLevel(getattr(logging,options['log_level']))
+
+    if(options['log_file']==None):
+        log_output = logging.StreamHandler()
+    else:
+        log_output = logging.FileHandler(options['log_file'])
+    log_output.setLevel(getattr(logging,options['log_level']))
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    log_output.setFormatter(formatter)
+    logger.addHandler(log_output)
+
     if options['inputfile'].endswith('/'):
         options['inputfile']=options['inputfile'][:-1]
 
-    dest_dir= "%s_parts_%d_%d"%(options['inputfile'],options['section'],options['gap'])
+    if os.path.isdir(options['inputfile']):
+        dest_dir= "%s_parts_%d_%d"%(options['inputfile'],options['section'],options['gap'])
+    else:
+        dest_dir= "%s_parts_%d_%d"%(os.path.dirname(options['inputfile']),options['section'],options['gap'])
     if(not os.path.isdir(dest_dir)):
-        print "Creating ",dest_dir,"..."
+        logger.info("Creating %s!"%dest_dir)
         os.makedirs(dest_dir)
 
-    print dest_dir," will be used to store file partitions"
+    logger.info("%s will be used to store file partitions"%dest_dir)
 
     section_secs = options['section']*60
     gap_secs= options['gap']*60
 
     block_minutes={}
-    print "Partitioning file in %d minutes intervals with %d gaps " %(options['section'],options['gap'])
+    logger.info("Partitioning file in %d minutes intervals with %d gaps " %(options['section'],options['gap']))
     block_minutes = tools.partition.partition_blocks(options['inputfile'],dest_dir,section_secs,gap_secs)
-    print "Partitioning complete"
+    logger.info("Partitioning complete")
+    
 
     compressed={}        
     options['level']=tools.compress.set_level(options)
     for filename in block_minutes:
-        file_blocks_dir = os.path.join(dest_dir,"%s_blocks"%filename)
+        logger.info("Compression started for %s" %os.path.join(dest_dir,"%s_blocks"%filename))
+        compressed[filename] = tools.compress.compress(os.path.join(dest_dir,"%s_blocks"%filename),options['compressor'],options['level'],options['decompress'])
+        logger.info("Compression complete")
         
-        print "Compressing files in",file_blocks_dir,"..."
-        compressed[filename] = tools.compress.compress(file_blocks_dir,options['compressor'],options['level'],options['decompress'])
-        print "Compression complete"
-
     for filename in compressed:
         if options['decompress']:
-            fboutname = os.path.join(dest_dir,
-                                     "%s_decompress_%s"%(filename,options['compressor']))
+            fboutname = "%s_decompress_%s"%(filename,options['compressor'])
         else:
-            fboutname = os.path.join(dest_dir,
-                                     "%s_%s%s"%(filename,options['compressor'],options['level']))
+            fboutname = "%s_%s%s"%(filename,options['compressor'],options['level'])
         with open(fboutname,"w") as fbout:
             for blocknum in compressed[filename]:
                 if options['decompress']:
@@ -92,7 +107,7 @@ if __name__=="__main__":
                 else:
                     fbout.write("%d\n"%compressed[filename][blocknum].compressed)
     
-    print "Using ",options['limits'],"metric to separate blocks"
+    logger.info("Using %s metric to separate blocks"%options['limits'])
     below_lower, above_upper = tools.separate_blocks.apply_metric(compressed,block_minutes,options['limits'])
     
     

@@ -221,7 +221,7 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description="Generates a table of file compression/entrop for a given directory")
     parser.add_argument("inputdir",metavar="INPUT DIRECTORY",help="Directory or case file to be used as input",action="store")
-    parser.add_argument("-l","--log",action="store",metavar="LOGFILE",default=None,dest="log_file",help="Use LOGFILE to save logs.")
+    parser.add_argument("--log",action="store",metavar="LOGFILE",default=None,dest="log_file",help="Use LOGFILE to save logs.")
     parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
 
     subparsers = parser.add_subparsers(help='Diferent commands to be run on directory', dest="command")

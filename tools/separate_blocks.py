@@ -41,6 +41,9 @@ This module's entry point funcion is apply_metric(...)
 """
 import numpy
 import csv
+import logging
+
+module_logger =logging.getLogger('hrfanalyse.separate_blocks')
 
 #ENTRY POINT FUNCTION
 
@@ -96,7 +99,6 @@ def apply_metric_file(compressed_blocks,block_times,metric):
     limit. The marked blocks are written to a .csv file.
     """
     compression_sizes = [compressed_blocks[fileblock].compressed for fileblock in compressed_blocks]
-    print compression_sizes
     if(metric=='mean_std'):
         lower_lim,upper_lim = mean_std(compression_sizes)
     elif(metric=='outliers'):

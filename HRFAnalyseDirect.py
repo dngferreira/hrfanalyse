@@ -164,7 +164,6 @@ Assume FOO is a directory.
 
 import argparse
 import os
-import shutil
 import tools.clean
 import tools.compress
 import tools.partition
@@ -242,7 +241,7 @@ if __name__=="__main__":
 
 
     Fs = 173
-    Band = [2*i+1 for i in xrange(0, 43)]		## 0.5~85 Hz
+    Band = [2*i+1 for i in range(0, 43)]		## 0.5~85 Hz
 
 
     args = parser.parse_args()
@@ -285,7 +284,7 @@ if __name__=="__main__":
             outfile = "%s_decompress_%s_%d.csv"%(output_name,compressor,level)
         else:
             outfile = "%s_%s_%d.csv"%(output_name,compressor,level)
-        writer = csv.writer(open(outfile,"wb"),delimiter=";")
+        writer = csv.writer(open(outfile,"w"),delimiter=";")
         header = ["Filename","Original Size","Compressed Size"]
         if options['decompress']:
             header.append("Decompression Time")

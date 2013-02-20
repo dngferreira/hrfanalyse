@@ -400,10 +400,7 @@ def sniffer(lines,start_at_end=False):
     previous_time= lines[0].split()[0]
     moda_count = 0
     for line in lines:
-        try:
-            time,hrf = line.split()
-        except:
-            raise NameError(line)
+        time,hrf = line.split()
         if times.has_key(time):
             times[time]+=1
         else:

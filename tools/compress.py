@@ -214,7 +214,7 @@ def lzma_compress(inputfile,level,decompress):
     with open(inputfile,"rU") as fdorig:
         origlines=fdorig.readlines()
     origtext = memoryview(bytearray(''.join(origlines),"utf8"))
-    compressedtext = bytearray(lzma.compress(origtext.tobytes(), preset=int(level)))#this is a backported version of this module no levels implemneted ,preset=int(level) will be available in python3
+    compressedtext = bytearray(lzma.compress(origtext.tobytes()))#, preset=int(level)))this is a backported version of this module no levels implemneted ,preset=int(level) will be available in python3
     with open(inputfile+".lzma","wb") as fdout:
         fdout.write(compressedtext)
     compressed_size = int(os.stat(inputfile+'.lzma').st_size)
@@ -340,7 +340,7 @@ def test_compressors():
     available["gzip"]=(1,9)
     available["bzip2"]=(1,9)
     if lzma_available:
-        available["lzma"]=(1,9)
+        available["lzma"]=(6,6)
     exec_path = os.environ.get("PATH")
     exec_path = exec_path.split(';')
     if len(exec_path)==1:

@@ -32,7 +32,7 @@ from numpy.fft import fft
 from numpy import zeros, floor, log10, log, mean, array, sqrt, vstack, cumsum, \
 				  ones, log2, std
 from numpy.linalg import svd, lstsq
-import time
+
 
 ######################## Functions contributed by Xin Liu #################
 

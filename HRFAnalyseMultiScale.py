@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 import argparse
-import os
 import csv
 import operator
+import functools
 import tools.multiscale
 import tools.compress
 import tools.entropy
@@ -51,7 +51,7 @@ if __name__=="__main__":
     scales_dir = '%s_Scales'%input_dir
 
     logger.info("Creating Scales Directory")
-    tools.multiscale.create_scales(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"])
+    tools.multiscale.create_scales(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"],options['mul_order'])
     logger.info("Scales Directory created")
 
     if options["command"]=="compress":
@@ -69,11 +69,11 @@ if __name__=="__main__":
                                                                     options["level"],
                                                                     options["decompress"])
 
-        writer=csv.writer(open(outfile,"wb"),delimiter=";")
+        writer=csv.writer(open(outfile,"w"),delimiter=";")
         if options['decompress']:
-            header = ["Filename"]+list(reduce(operator.add,[("Escala%d Original"%s,"Escala%d Compressed"%s,"Escala%d Decompression"%s) for s in xrange(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]))
+            header = ["Filename"]+list(functools.reduce(operator.add,[("Escala%d Original"%s,"Escala%d Compressed"%s,"Escala%d Decompression"%s) for s in range(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]))
         else:
-            header = ["Filename"]+list(reduce(operator.add,[("Escala%d Original"%s,"Escala%d Compressed"%s) for s in xrange(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]))
+            header = ["Filename"]+list(functools.reduce(operator.add,[("Escala%d Original"%s,"Escala%d Compressed"%s) for s in range(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]))
         writer.writerow(header)
         for filename in sorted(compression_table.keys()):
             writer.writerow([filename]+compression_table[filename])
@@ -99,7 +99,7 @@ if __name__=="__main__":
             
             
             writer=csv.writer(open(outfile,"wb"),delimiter=";")
-            header = ["Filename"]+[ "Escala%d Entropy"%s for s in xrange(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]
+            header = ["Filename"]+[ "Escala%d Entropy"%s for s in range(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]
             writer.writerow(header)
             for filename in sorted(entropy_table.keys()):
                 writer.writerow([filename]+entropy_table[filename])            

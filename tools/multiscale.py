@@ -34,15 +34,15 @@ This module's entry point funtion is multiscale(...)
 
 import os
 import numpy
-import compress
-import entropy
+from . import compress
+from . import entropy
 import logging
 
 module_logger=logging.getLogger('hrfanalyse.multiscale')
 
 #ENTRY POINT FUNCTION
 
-def create_scales(input_name,dest_dir,start,stop,step):
+def create_scales(input_name,dest_dir,start,stop,step,mul_order):
     """
     Create all the scales in a given interval.
 
@@ -52,7 +52,7 @@ def create_scales(input_name,dest_dir,start,stop,step):
 
     Return: None
     """
-    for scale in xrange(start,stop,step):
+    for scale in range(start,stop,step):
         output_dir = os.path.join(dest_dir,"Scale %d"%scale)
         if not os.path.isdir(output_dir):
             module_logger.info("Creating Scale %d..."%scale)
@@ -63,9 +63,9 @@ def create_scales(input_name,dest_dir,start,stop,step):
         if os.path.isdir(input_name):
             filelist = os.listdir(input_name)
             for filename in filelist:
-                create_scale(os.path.join(input_name,filename.strip()),output_dir,scale)
+                create_scale(os.path.join(input_name,filename.strip()),output_dir,scale,mul_order)
         else:
-            create_scale(input_name.strip(),output_dir,scale)
+            create_scale(input_name.strip(),output_dir,scale,mul_order)
 
 
 def multiscale_compression(input_name,start,stop,step,compressor,level,decompress):
@@ -74,7 +74,7 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
         filelist = os.listdir(input_name)
         for filename in filelist:
             compression_table[filename] = []
-            for scale in xrange(start,stop,step):
+            for scale in range(start,stop,step):
                 file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
                 compression_results = compress.compress(file_to_compress,compressor,level,decompress)
                 compression_table[filename].append(compression_results[file_to_compress].original)
@@ -82,7 +82,7 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
                 if decompress:
                     compression_table[filename].append(compression_results[file_to_compress].time)  
     else:
-        for scale in xrange(start,stop,step):
+        for scale in range(start,stop,step):
             file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,input_name)
             compression_results = compress.compress(file_to_compress,compressor,level,decompress)
             compression_table[filename].append(compression_results[file_to_compress].original)
@@ -103,7 +103,7 @@ def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
             tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
             for filename in filelist:
                 entropy_table[filename]=[]
-                for scale in xrange(start,stop,step):
+                for scale in range(start,stop,step):
                     file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
                     entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances[filename])
                     entropy_table[filename].append(entropy_results[file_in_scale][1])
@@ -112,14 +112,14 @@ def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
             tolerances = [ files_stds[filename]*tolerance for filename in files_stds]
             entropy_table[input_name]=[]
             filename = os.path.basename(input_name)
-            for scale in xrange(start,stop,step):
+            for scale in range(start,stop,step):
                 file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
                 entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances)
                 entropy_table[input_name].append(entropy_results[1])
     return entropy_table
 
 #IMPLEMENTATION
-def create_scale(inputfile, output_dir, scale):
+def create_scale(inputfile, output_dir, scale, mul_order):
     """
     This function creates a particular scale for one file.
 
@@ -138,10 +138,12 @@ def create_scale(inputfile, output_dir, scale):
     with open(inputfile,"r") as fdin:
         with open(os.path.join(output_dir,filename),"w") as fdout:
             lines = fdin.readlines()
-            lines = map(float,lines)
+            lines = list(map(float,lines))
+            if mul_order!=-1:
+                lines = [line*mul_order for line in lines]
             while line_index+scale <=len(lines):
                 scaled_hrf = numpy.mean(lines[line_index:line_index+scale])
-                fdout.write('%.3f\n'%scaled_hrf)
+                fdout.write('%d\n'%round(scaled_hrf))
                 line_index+=scale
 
 
@@ -160,3 +162,4 @@ def add_parser_options(parser):
     parser.add_argument("-start","--scale-start",metavar="SCALE",type=int,dest="scale_start",action="store",help="Start scales whith this amount of points. Default:[%(default)s]",default=2)
     parser.add_argument("-stop","--scale-stop",metavar="SCALE",type=int,dest="scale_stop",action="store",help="Stop scales whith this amount of points. Default:[%(default)s]",default=20)
     parser.add_argument("-step","--scale-step",metavar="STEP",type=int,dest="scale_step", action="store",help="Step between every two scales.Default:[%(default)s]", default=1)
+    parser.add_argument("--multiply",metavar="MUL ORDER",type=int,dest="mul_order",action="store",help="before calculating the resulting scale, multiply every number in the series by MUL ORDER, -1 disables this option; Default:[%(default)s]",default=-1)

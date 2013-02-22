@@ -84,8 +84,7 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
     between 50 and 250, otherwise we jump to the next line.
 
     """
-    filename = os.path.basename(inputfile).strip()
-    with open(inputfile,"r") as fdin:
+    with open(inputfile,"rU") as fdin:
         with open(dest_file,"w") as fdout:
             for line in fdin:
                 data =  line.split()

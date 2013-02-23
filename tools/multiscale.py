@@ -34,8 +34,8 @@ This module's entry point funtion is multiscale(...)
 
 import os
 import numpy
-from . import compress
-from . import entropy
+from .compress import compress
+from .entropy import entropy, calculate_std
 import logging
 
 module_logger=logging.getLogger('hrfanalyse.multiscale')
@@ -76,7 +76,7 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
             compression_table[filename] = []
             for scale in range(start,stop,step):
                 file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                compression_results = compress.compress(file_to_compress,compressor,level,decompress)
+                compression_results = compress(file_to_compress,compressor,level,decompress)
                 compression_table[filename].append(compression_results[file_to_compress].original)
                 compression_table[filename].append(compression_results[file_to_compress].compressed)  
                 if decompress:
@@ -84,7 +84,7 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
     else:
         for scale in range(start,stop,step):
             file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,input_name)
-            compression_results = compress.compress(file_to_compress,compressor,level,decompress)
+            compression_results = compress(file_to_compress,compressor,level,decompress)
             compression_table[filename].append(compression_results[file_to_compress].original)
             compression_table[filename].append(compression_results[file_to_compress].compressed)  
             if decompress:
@@ -99,22 +99,22 @@ def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
         dim,tolerance = args
         if os.path.isdir(input_name):
             filelist= os.listdir(input_name)
-            files_stds = entropy.calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
+            files_stds = calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
             tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
             for filename in filelist:
                 entropy_table[filename]=[]
                 for scale in range(start,stop,step):
                     file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                    entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances[filename])
+                    entropy_results = entropy(file_in_scale,entropy_function,dim,tolerances[filename])
                     entropy_table[filename].append(entropy_results[file_in_scale][1])
         else:
-            files_stds = entropy.calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
+            files_stds = calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
             tolerances = [ files_stds[filename]*tolerance for filename in files_stds]
             entropy_table[input_name]=[]
             filename = os.path.basename(input_name)
             for scale in range(start,stop,step):
                 file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                entropy_results = entropy.entropy(file_in_scale,entropy_function,dim,tolerances)
+                entropy_results = entropy(file_in_scale,entropy_function,dim,tolerances)
                 entropy_table[input_name].append(entropy_results[1])
     return entropy_table
 

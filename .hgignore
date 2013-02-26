@@ -4,3 +4,8 @@ syntax:glob
 unittest_dataset_*
 .sonar/
 sonar-project.properties
+\.orig\..*$
+\.orig$
+\.chg\..*$
+\.rej$
+\.conflict\~$

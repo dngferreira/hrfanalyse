@@ -131,23 +131,8 @@ def d1(filename1,filename2,compressor,level,decompress):
     a temporary file. Compression is then calculated for each file
     including the concatenation file, and the formula is applied.
     """
-    file_total_data = []
-    file1_file2 = tempfile.NamedTemporaryFile(delete=False)
-    file2_file1 = tempfile.NamedTemporaryFile(delete=False)
-    with open(filename1,"r") as file1:
-        with open(filename2,"r") as file2:
-            file1_data = file1.readlines()
-            file2_data = file2.readlines()
-            file1_file2_data = file1_data+file2_data
-            file2_file1_data = file2_data+file1_data
-    for line in file1_file2_data:
-        file1_file2.write(line)
-    for line in file2_file1_data:
-        file2_file1.write(line)
-
-    file1_file2.close()
-    file2_file1.close()
     
+    file1_file2, file2_file1 = create_concatenated_files(filename1,filename2)
 
     file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
     file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
@@ -161,8 +146,8 @@ def d1(filename1,filename2,compressor,level,decompress):
         dist = max(file1_file2_cdata.compressed - file1_cdata.compressed, file2_file1_cdata.compressed - file2_cdata.compressed)/ float(max(file1_cdata.compressed, file2_cdata.compressed))
 
 
-    os.unlink(file1_file2.name)
-    os.unlink(file2_file1.name)
+#    os.unlink(file1_file2.name)
+#    os.unlink(file2_file1.name)
 
     return dist
 
@@ -190,22 +175,7 @@ def d2(filename1,filename2,compressor,level,decompress):
     a temporary file. Compression is then calculated for each file
     including the concatenation file, and the formula is applied.
     """
-    file_total_data = []
-    file1_file2 = tempfile.NamedTemporaryFile(delete=False)
-    file2_file1 = tempfile.NamedTemporaryFile(delete=False)
-    with open(filename1,"r") as file1:
-        with open(filename2,"r") as file2:
-            file1_data = file1.readlines()
-            file2_data = file2.readlines()
-            file1_file2_data = file1_data+file2_data
-            file2_file1_data = file2_data+file1_data
-    for line in file1_file2_data:
-        file1_file2.write(line)
-    for line in file2_file1_data:
-        file2_file1.write(line)
-
-    file1_file2.close()
-    file2_file1.close()
+    file1_file2, file2_file1 = create_concatenated_files(filename1,filename2)
 
     file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
     file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
@@ -224,6 +194,25 @@ def d2(filename1,filename2,compressor,level,decompress):
     return dist
 
 #AUXILIARY FUNCTION
+
+def create_concatenated_files(filename1,filename2):
+    file1_file2 = tempfile.NamedTemporaryFile(delete=False)
+    file2_file1 = tempfile.NamedTemporaryFile(delete=False)
+    with open(filename1,"r") as file1:
+        with open(filename2,"r") as file2:
+            file1_data = file1.readlines()
+            file2_data = file2.readlines()
+            file1_file2_data = file1_data+file2_data
+            file2_file1_data = file2_data+file1_data
+    for line in file1_file2_data:
+        file1_file2.write(line)
+    for line in file2_file1_data:
+        file2_file1.write(line)
+
+    file1_file2.close()
+    file2_file1.close()
+    return (file1_file2,file2_file1)
+
 
 def add_parser_options(parser):
     """

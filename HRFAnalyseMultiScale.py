@@ -51,7 +51,7 @@ if __name__=="__main__":
     scales_dir = '%s_Scales'%input_dir
 
     logger.info("Creating Scales Directory")
-    tools.multiscale.create_scales(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"],options['mul_order'])
+    tools.multiscale.create_scales(input_dir,scales_dir,options["scale_start"],options["scale_stop"]+1,options["scale_step"],options['mul_order'],options['round'])
     logger.info("Scales Directory created")
 
     if options["command"]=="compress":

@@ -42,7 +42,7 @@ module_logger=logging.getLogger('hrfanalyse.multiscale')
 
 #ENTRY POINT FUNCTION
 
-def create_scales(input_name,dest_dir,start,stop,step,mul_order):
+def create_scales(input_name,dest_dir,start,stop,step,mul_order,round_to_int):
     """
     Create all the scales in a given interval.
 
@@ -63,9 +63,9 @@ def create_scales(input_name,dest_dir,start,stop,step,mul_order):
         if os.path.isdir(input_name):
             filelist = os.listdir(input_name)
             for filename in filelist:
-                create_scale(os.path.join(input_name,filename.strip()),output_dir,scale,mul_order)
+                create_scale(os.path.join(input_name,filename.strip()),output_dir,scale,mul_order,round_to_int)
         else:
-            create_scale(input_name.strip(),output_dir,scale,mul_order)
+            create_scale(input_name.strip(),output_dir,scale,mul_order,round_to_int)
 
 
 def multiscale_compression(input_name,start,stop,step,compressor,level,decompress):
@@ -119,7 +119,7 @@ def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
     return entropy_table
 
 #IMPLEMENTATION
-def create_scale(inputfile, output_dir, scale, mul_order):
+def create_scale(inputfile, output_dir, scale, mul_order,round_to_int):
     """
     This function creates a particular scale for one file.
 
@@ -143,7 +143,10 @@ def create_scale(inputfile, output_dir, scale, mul_order):
                 lines = [line*mul_order for line in lines]
             while line_index+scale <=len(lines):
                 scaled_hrf = numpy.mean(lines[line_index:line_index+scale])
-                fdout.write('%d\n'%round(scaled_hrf))
+                if round_to_int:
+                    fdout.write('%d\n'%round(scaled_hrf))
+                else:
+                    fdout.write('%.3f\n'%scaled_hrf)
                 line_index+=scale
 
 
@@ -163,3 +166,4 @@ def add_parser_options(parser):
     parser.add_argument("-stop","--scale-stop",metavar="SCALE",type=int,dest="scale_stop",action="store",help="Stop scales whith this amount of points. Default:[%(default)s]",default=20)
     parser.add_argument("-step","--scale-step",metavar="STEP",type=int,dest="scale_step", action="store",help="Step between every two scales.Default:[%(default)s]", default=1)
     parser.add_argument("--multiply",metavar="MUL ORDER",type=int,dest="mul_order",action="store",help="before calculating the resulting scale, multiply every number in the series by MUL ORDER, -1 disables this option; Default:[%(default)s]",default=-1)
+    parser.add_argument("--round-to-int",dest="round",action="store_true",default=False)

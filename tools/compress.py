@@ -43,7 +43,6 @@ import subprocess
 import sys
 import zlib
 import bz2
-import numpy
 try:
     import lzma
     lzma_available=True
@@ -139,8 +138,8 @@ def gzip_compress(inputfile,level,decompress):
     
     original_size= int(os.stat(inputfile).st_size)
     with open(inputfile,"rU") as fdorig:
-        origlines=fdorig.readlines()
-    origtext = memoryview(bytearray(''.join(origlines),"utf8"))
+        origlines=fdorig.read()
+    origtext = memoryview(bytearray(origlines,"utf8"))
     compressedtext = bytearray(zlib.compress(origtext.tobytes(),int(level)))
     with open(inputfile+".gz","wb") as fdout:
         fdout.write(compressedtext)
@@ -216,8 +215,8 @@ def lzma_compress(inputfile,level,decompress):
 
     original_size= int(os.stat(inputfile).st_size)
     with open(inputfile,"rU") as fdorig:
-        origlines=fdorig.readlines()
-    origtext = memoryview(bytearray(''.join(origlines),"utf8"))
+        origlines=fdorig.read()
+    origtext = memoryview(bytearray(origlines,"utf8"))
     compressedtext = bytearray(lzma.compress(origtext.tobytes()))#, preset=int(level)))this is a backported version of this module no levels implemneted ,preset=int(level) will be available in python3
     with open(inputfile+".lzma","wb") as fdout:
         fdout.write(compressedtext)
@@ -259,8 +258,8 @@ def bzip2_compress(inputfile,level,decompress):
 
     original_size= int(os.stat(inputfile).st_size)
     with open(inputfile,"rU") as fdorig:
-        origlines=fdorig.readlines()
-    origtext = memoryview(bytearray(''.join(origlines),"utf8"))
+        origlines=fdorig.read()
+    origtext = memoryview(bytearray(origlines,"utf8"))
     compressedtext = bytearray(bz2.compress(origtext.tobytes(),int(level)))
     with open(inputfile+".bz2","w") as fdout:
         fdout.write(compressedtext)

@@ -308,38 +308,12 @@ if __name__=="__main__":
                                                    tolerances)
             
             outfile= "%s_%s_%d_%f.csv" %(output_name, options['entropy'], options['dimension'], options['tolerance'])
-        # else:
-        #     if options['entropy']=="specen":
-        #     resulting_dict = tools.entropy.entropy(inputdir,
-        #                                            options['entropy'],
-        #                                            Band,
-        #                                            Fs)
-        #     outfile= "%s_%s.csv"%(output_name,options['entropy'])
-        # if ((options['entropy']=="hurst") or 
-        #     (options['entropy']=="dfa") or 
-        #     (options['entropy']=="hjorth") or 
-        #     (options['entropy']=="pfd")):
-        #     resulting_dict = tools.entropy.entropy(inputdir,options['entropy'])
-        #     outfile= "%s_%s.csv"%(output_name,options['entropy'])
-        # if options['entropy']=="hfd":
-        #     resulting_dict = tools.entropy.entropy(inputdir,
-        #                                            options['entropy'],
-        #                                            options['kmax'])
-        #     outfile= "%s_%s_%d.csv" %(output_name, options['entropy'], options['kmax'])
-        # if ((options['entropy']=='fi') or 
-        #     (options['entropy']=='svden')):
-        #     resulting_dict = tools.entropy.entropy(inputdir,
-        #                                            options['entropy'],
-        #                                            options['dimension'],
-        #                                            options['tau'])
-            
-        #    outfile= "%s_%s_%d_%d" %(output_name, options['entropy'], options['dimension'], options['tau'])
         
-        writer = csv.writer(open(outfile,"wb"),delimiter=";")
+        writer = csv.writer(open(outfile,"w"),delimiter=";")
         writer.writerow(["Filename","Entropy"])
         for filename in sorted(resulting_dict.keys()):
-            file_points, file_entropy = resulting_dict[filename]
-            writer.writerow([filename,file_entropy])        
+            entropyData = resulting_dict[filename]
+            writer.writerow([filename,entropyData.entropy])        
 
 
 

@@ -19,215 +19,77 @@ This file is part of HRFAnalyse.
 
 _______________________________________________________________________________
 
-This module mostly reads the data from the files to a python list and
-calls the function with the same name implemented in pyeeg, with the
-exception of sample entropy wich is a command line call to an
-executable, the executable is included in the tool directory for ease
-of use, but you can download the code or just get to know the
-implementation details from the project page cited below.
+This module implements the calculation of entropy (sample and aproximate since 
+after some testing these seem to be the only ones that have significant results 
+for our specific purposes. Some of the functions are calls to some pyeeg 
+implementation. The pyeeg module available at this time does not work for Python3.
 
-For all other function's documentation look at the pyeeg project page.
 
-MODULE DEPENDENCIES:
+MODULE EXTERNAL DEPENDENCIES:
 pyeeg(http://code.google.com/p/pyeeg/downloads/list),
 numpy(http://numpy.scipy.org/),
-sampen(http://www.physionet.org/physiotools/sampen/)
 
-This module's entry point function is entropy(...)
+ENTRY POINT: entropy(input_name,function,dimension,tolerances)
+             calculate_std(input_name)
 """
 
-import pyeeg
+#comment this line if you intend to use Python3
+from tools.pyeeg import samp_entropy,ap_entropy
 import sys
 import os
 import numpy
+from collections import namedtuple
+
+#DATA TYPE DEFINITIONS
+"""This is a data type defined to be used as a return for entropy; it
+contains the number of points in the file, and the file's entropy"""
+EntropyData = namedtuple('EntropyData','points entropy')
+
 
 #ENTRY POINT FUNCTION
-
-def entropy(input_name,function,*function_args):
+def entropy(input_name,function,dimension,tolerances):
     """
+    (str, str, int, float) -> EntropyData
+    
     Given a file or directory named input_name, calculate the desired
     entropy to all the files.
 
-    Arguments: name of the directory/file where entropy should be
-    calculated, entropy function to use, and the arguments to the
-    selected entropy function.
-    
-    Return: Dictionary, where filenames are the keys and the values
-    are tuples with the number of points in the files and entropy
-    value.
-
-    Algorithm: Retrieve a complete list of all the files in the
+    ALGORITHM: Retrieve a complete list of all the files in the
     directory.  For every file in the list calculate the entropy using
     the user chosen function.
 
-    Note: The * in the last variable is so I can get a variable amount
-    of argments to pass to the entropy calculating functions, if you
-    look at those function's arguments you'll notice different numbers
-    and types of arguments.
+    NOTE: This functions last two parameters are specific for the entropy 
+    calculating algorithms we are using.
     """
 
     method_to_call= getattr(sys.modules[__name__],function)
     entropy_dict={}
-    if function=="apen" or function=="apenv2" or function=="sampen":
-        dim, tolerances = function_args
-        if os.path.isdir(input_name):
-            filelist = os.listdir(input_name)
-            for filename in filelist:
-                file_points,file_entropy = method_to_call(os.path.join(input_name,filename.strip()),dim,tolerances[filename])
-                entropy_dict[filename.strip()] = (file_points,file_entropy)
-        else:
-            if type(tolerances)==dict:
-                tolerances=tolerances[tolerances.keys()[0]]
-            file_points,file_entropy = method_to_call(input_name.strip(),dim,tolerances)
-            entropy_dict[input_name.strip()] = (file_points,file_entropy)
+    if os.path.isdir(input_name):
+        filelist = os.listdir(input_name)
+        for filename in filelist:
+            entropyData = method_to_call(os.path.join(input_name,filename.strip()),dimension,tolerances[filename])
+            entropy_dict[filename.strip()] = entropyData
+    else:
+        tolerances=tolerances[list(tolerances.keys())[0]]
+        entropyData = method_to_call(input_name.strip(),dimension,tolerances)
+        entropy_dict[input_name.strip()] = entropyData
     return entropy_dict
 
-
-#IMPLEMENTATION
-
-
-def apen(filename,dim,tolerance):
-    with open(filename,"r") as file_d:
-        file_data = file_d.readlines()
-    file_data = map(float,file_data)
-    return len(file_data),pyeeg.ap_entropy(file_data, dim, tolerance)
-
-def apenv2(filename,dim,tolerance):
-    with open(filename,"r") as file_d:
-        file_data = file_d.readlines()
-    file_data = map(float,file_data)
-
-    data_len = len(file_data)
-
-
-    Cm, Cmp = numpy.ones(data_len - dim + 1), numpy.ones(data_len - dim)
-    i=0
-    while i<data_len-dim+1:
-        j=i+1
-        while j< data_len-dim+1:
-            si=0
-            for m in xrange(dim):
-                if abs(file_data[i+m]-file_data[j+m])<=tolerance:
-                    si+=1
-                else:
-                    break
-            if si==dim:
-                Cm[i]+=1
-                Cm[j]+=1
-                if i<data_len-dim and j<data_len-dim:
-                    Cmp[i]+=1
-                    Cmp[j]+=1
-                    if abs(file_data[i+dim]-file_data[j+dim])>tolerance:
-                        Cmp[i]-=1
-                        Cmp[j]-=1
-            j+=1
-        i+=1
-
-
-    Cm = [line/(data_len-dim+1) for line in Cm]
-    Cmp = [line/(data_len-dim) for line in Cmp]
-
-    Phi_m, Phi_mp = numpy.mean([numpy.log(pos) for pos in Cm]) , numpy.mean([numpy.log(pos) for pos in Cmp])
-
-    Ap_En = Phi_m - Phi_mp
-
-    return len(file_data),Ap_En
-
-# TODO
-# def fast_apen(filename,args):
-#    Try the implementation described in this article http://www.sciencedirect.com/science/article/pii/S0169260710002956
-#
-
-def sampen(filename,dim,tolerance):
-    with open(filename,'r') as file_d:
-        file_data= file_d.readlines()
-    file_data=map(float,file_data)
-    # if len(file_data)==0:
-    #     return (0,0)
-    # result = os.popen('%s -r %f -m %d "%s"'%(os.path.join('tools','sampen'),tolerance,dim,filename))
-    # result = result.readlines()
-    # result = result[dim].split('=')[1]
-    #    return len(file_data),result.strip()
-    return len(file_data),pyeeg.samp_entropy(file_data,dim,tolerance)
-
-# def specen(filename,args):
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     try:
-#         Band, Fs = args
-#     except:
-#         print "Error: Insuficient arguments to apply spectral entropy"
-#         exit
-#     return len(file_data),pyeeg.spectral_entropy(file_data, Band, Fs)
-
-# def hurst(filename,args):
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     return len(file_data),pyeeg.hurst(file_data)
-
-# def dfa(filename,args):
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     return len(file_data),pyeeg.dfa(file_data)
-
-
-# def hjorth(filename,args):
-#     file_d = open(filename,"r")
-#     file_data = []
-#     for line in file_d:
-#         if len(line.split())==2:
-#             time, hrf = line.split()
-#         else:
-#             hrf = line
-#         file_data.append(float(hrf))
-#     return len(file_data),pyeeg.hjorth(file_data)
-
-# def pfd(filename,args):
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     return len(file_data),pyeeg.pfd(file_data)
-
-# def hfd(filename,args):
-#     try:
-#         kmax = args[0]
-#     except:
-#         print "Error: Insuficient arguments to apply hfd"
-#         exit
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     return len(file_data),pyeeg.hfd(file_data,kmax)
-
-
-# def fi(filename,args):
-#     try:
-#         dim,tau = args
-#     except:
-#         print "Error: Insuficient arguments to apply fi"
-#         exit
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     seq = pyeeg.embed_seq(file_data, tau, dim)
-#     w = numpy.linalg.svd(seq, compute_uv=0)
-#     w /= sum(w)
-#     return len(file_data),pyeeg.fisher_info(file_data, tau, dim, w)
-
-# def svden(filename,args):
-#     try:
-#         dim,tau = args
-#     except:
-#         print "Error: Insuficient arguments to apply fi"
-#         exit
-#     file_d = open(filename,"r")
-#     file_data = file_d.readlines()
-#     seq = pyeeg.embed_seq(file_data, tau, dim)
-#     w = numpy.linalg.svd(seq, compute_uv=0)
-#     w /= sum(w)
-#     return len(file_data),pyeeg.svd_entropy(file_data, tau, dim, w)
-
-
-#AUXILIARY FUNCTIONS
-
 def calculate_std(input_name):
+    """
+    Function to calculate the standard deviation for the values in a file/directory.
+    This is not a conventional entry point as it does not calculate any type of 
+    entropy, but since it is necessary to define tolerances, this is the best place
+    for it.
+    
+    ARGUMENTS: String input_name name of the file/directory.
+    
+    RETURN: Dictionary with filenames as keys and their standard deviation as values.
+    
+    ALGORITHM: For each file call the implementation calculate_file_std, put the
+    returned std in the dictionary.
+    
+    """
     files_std = {}
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
@@ -237,13 +99,177 @@ def calculate_std(input_name):
         files_std[input_name]=calculate_file_std(input_name)
     return files_std
 
+#IMPLEMENTATION
+def apen(filename,dimension,tolerance):
+    """
+    A function that uses the pyeeg implementation of aproximate entropy to 
+    calculte the entropy for one file. 
+    
+    ARGUMENTS: String filename, int dimension, float tolerance
+    
+    RETURN: EntropyData type
+    """
+    with open(filename,"r") as file_d:
+        file_data = file_d.readlines()
+    file_data = list(map(float,file_data))
+    return EntropyData(len(file_data),ap_entropy(file_data, dimension, tolerance))
+
+def apenv2(filename,dimension,tolerance):
+    """
+    An implementation of Aproximate entropy. The explanation of the algorithm is 
+    a bit long because it is a little different from the original version it was 
+    based on. It is still an O(mn2) worst case algorithm.
+    
+    ARGUMENTS: String filename, int dimension, float tolerance
+    
+    RETURN: EntropyData
+    
+    ALGORITHM: Based on the algorithm described in the book referenced bellow, 
+    this implementation actualy calculates the Nm and Nm+1(Nmp) vectors directly. 
+    The following description is an explanation to help you understand why we jump
+    directly to building Nm.
+    
+    Suppose we started by directly calculating the auxilary matrix S where every
+    cell S(i,j) is either 0 if the absolute distance between points i and j is 
+    bigger then the tolerance or 1 otherwise. The matrix is symmetrical and the 
+    diagonal is all 1's, so we would only actualy need to calculate the upper half
+    of the matrix.
+    
+    In matrix Crm the cell value will be one if all the S(i,j)...S(i+m,j+m) cells 
+    are 1. Or we can look at it the otherway arround and say that if any of the 
+    values of that interval is 0 then Crm(i,j) is also 0, morover if we start at
+    the S(i+m,j+m) cell and work our way back if we find a 0 we know that any Crm 
+    cells diagonally above that one will also be 0(*). Looking at the description 
+    it's easy to see that we could just as easily star here, if instead of verifying
+    the value of auxilary matrix S is 0 we directly verify if the absolute distance
+    is greater that tolerance. The Crm and Crm+1 matrixes are necessarily also 
+    symmetrical and with a main diagonal filled with 1's.
+    
+    Nm, and Nm+1 are vectors where every index(i) is the sum of each row(i) in Crm
+    and Crm+1 respectively. Since we proposed looking for 0's instead of 1 our N
+    vectors start with the value assuming all the columns in the row are 1, we then
+    subtract for every 0 found. Although the Cr matrixes are not actually created
+    the two variables i and j in the implementation are the row and column for the
+    Crm matrix. With that in mind and the fact that the Crm matrix is symmetrical,
+    we can simply test the value of the distance between points i and j, if it 
+    is bigger than the tolerance, Crm would have a zero in that cell and so we 
+    subtract one from our Nm and Nm+1 vector at position i and j. Provided of 
+    course both i and j are within the index limits.
+    
+    The rest of the implementation follows the description found it the book, Cm
+    is the vector Nm with all cells divided by the length of Nm. Analogous for Cmp
+    and Nmp. Finaly the Phi's are calculated by avaraging the Cm and Cmp vectors
+    and the entropy value is the subtraction of Phi of Cm and Phi of Cmp.
+    
+    (*)As an implementatio boost we use this knowledge to skip some cell whose value
+    we already know to be 0. This is done by creating a burned_indexes that contains 
+    the columns we want to jump over in the upcoming rows. The columns are kept 
+    in a dictionary so the test if a particular column is to jumped is O(1).
+    
+    BIBLIGRAPHICAL REFERENCE:
+    Fusheng, Y., Bo, H. and Qingyu, T. (2000) Approximate Entropy and Its 
+    Application to Biosignal Analysis, in Nonlinear Biomedical Signal 
+    Processing: Dynamic Analysis and Modeling, Volume 2 (ed M. Akay), John Wiley
+    & Sons, Inc., Hoboken, NJ, USA. doi: 10.1002/9780470545379.ch3
+    
+    """
+    
+    with open(filename,"r") as file_d:
+        file_data = file_d.readlines()
+    file_data = list(map(float,file_data))
+
+    data_len = len(file_data)
+
+    Nm = [data_len-dimension+1]*(data_len-dimension+1)
+    Nmp = [data_len - dimension]*(data_len - dimension)
+    burned_indexes=[{} for i in range(data_len -dimension+1)]
+
+    for i in range(0,data_len-(dimension-1)):
+        if i>0:
+            burned_indexes[i-1]=None
+        for j in range(i+1,data_len-(dimension-1)):
+            if j in burned_indexes[i]:
+                continue
+            m=dimension-1
+            while m >= 0:
+                if abs(file_data[i+m]-file_data[j+m])>tolerance:
+                    mabove=m
+                    while mabove>=0:
+                        if i+mabove<data_len-(dimension-1) and j+mabove<data_len-(dimension-1):
+                            Nm[i+mabove]-=1
+                            Nm[j+mabove]-=1
+                        if i+mabove<data_len-dimension and j+mabove<data_len-dimension:
+                            Nmp[i+mabove]-=1
+                            Nmp[j+mabove]-=1
+                        if i+mabove<data_len-dimension+1 and j+mabove<data_len-dimension+1:
+                            burned_indexes[i+mabove][j+mabove]=None
+                        mabove-=1
+                    break
+                m-=1
+            if m<0 and i<data_len-dimension and j<data_len-dimension and abs(file_data[i+dimension]-file_data[j+dimension])>tolerance:
+                        Nmp[i]-=1
+                        Nmp[j]-=1
+
+    Cm = [line/float(data_len-dimension+1) for line in Nm]
+    Cmp = [line/float(data_len-dimension) for line in Nmp]
+
+    Phi_m = numpy.mean([numpy.log(pos) for pos in Cm])
+    Phi_mp = numpy.mean([numpy.log(pos) for pos in Cmp])
+    
+    Ap_En = Phi_m - Phi_mp
+
+    return EntropyData(len(file_data),Ap_En)
+
+
+def transform_to_space(m,data):
+    pointArray=[]
+    for index in range(len(data)):
+        pointArray[index]=[axis for axis in data[i:i+m]]
+    return pointArray
+        
+
+#def fast_apen(filename,args):
+#    """Try the implementation described in this article 
+#    http://www.sciencedirect.com/science/article/pii/S0169260710002956"""
+#
+#    with open(filename,"r") as file_d:
+#        file_data = file_d.readlines()
+#    file_data = list(map(float,file_data))
+#
+#    data_len = len(file_data)
+#
+#    pointArray = transform_to_space(m,file_data)
+#    
+#    pointArray.sort()
+
+def sampen(filename,dimension,tolerance):
+    """
+    A function that uses the pyeeg implementation of sample entropy to 
+    calculte the entropy for one file. 
+    
+    ARGUMENTS: String filename, int dimension, float tolerance
+    
+    RETURN: EntropyData type
+    """
+    with open(filename,'r') as file_d:
+        file_data= file_d.readlines()
+    file_data=list(map(float,file_data))
+    return EntropyData(len(file_data),samp_entropy(file_data,dimension,tolerance))
+
 def calculate_file_std(filename):
-    file_d = open(filename,"r")
-    file_data = file_d.readlines()
-    file_data = map(float,file_data)
+    """
+    Function to calculate the standard deviation of the values in a single file.
+    
+    ARGUMENTS: String filename.
+    
+    RETURN: float standard deviation of file data.
+    """
+    with open(filename,"rU") as fdin:
+        file_data = fdin.readlines()
+    file_data = list(map(float,file_data))
     return numpy.std(file_data)
 
-
+#AUXILIARY FUNCTIONS
 
 def add_parser_options(parser):
     """
@@ -268,25 +294,3 @@ def add_parser_options(parser):
     ap_en_v2 = entropy_parsers.add_parser('apenv2', help="Aproximate Entropy version 2")
     ap_en_v2.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",default=0.1)
     ap_en_v2.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
-
-    # spec_en = entropy_parsers.add_parser('specen', help="Spectral Entropy")
-
-    # hurst_en = entropy_parsers.add_parser('hurst', help="Hurst Exponent")
-
-    # dfa_en = entropy_parsers.add_parser('dfa', help="Detrended Fluctuation Analysis")
-
-    # hjorth_en = entropy_parsers.add_parser('hjorth', help="Hjorth Mobility and Complexity")
-    
-    # pfd_en = entropy_parsers.add_parser('pfd', help="Petrosian Fractal Dimension")
-
-    # hfd_en = entropy_parsers.add_parser('hfd', help="Higuchi Fractal Dimension")
-    # hfd_en.add_argument('-k','--kmax',dest="kmax",type=int,action="store",metavar="KMAX",help="Value of Kmax. [default:%(default)s]",default=5)
-
-    # fi_en = entropy_parsers.add_parser('fi', help="Fisher Information")
-    # fi_en.add_argument('-t','--tau',dest="tau",type=int,action="store",metavar="TAU",help="Value of Tau. [default:%(default)s]",default=4)
-    # fi_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="DIMENSION",help="Dimension. [default:%(default)s]",default=10)
-
-    # svd_en = entropy_parsers.add_parser('svden', help="Singular Value Decomposition Entropy")
-    # svd_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="DIMENSION",help="Dimension. [default:%(default)s]",default=10)
-    # svd_en.add_argument('-t','--tau',dest="tau",type=int,action="store",metavar="TAU",help="Value of Tau. [default:%(default)s]",default=4)
-    

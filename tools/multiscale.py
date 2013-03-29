@@ -20,22 +20,27 @@ This file is part of HRFAnalyse.
 _______________________________________________________________________________
 
 This module creates the multiple scales for a file or all the files in
-a directory. 
+a directory.
 
 A scale is related to the number of points in a time series in this
 case the practical creation of a scale N is achieved by taking every N
 numbers and transforming them into one by calculating their mean.
 
+Once the scales are created you can use this module to compress or calculate the 
+entropy of the different scales.
+
 MODULE DEPENDENCIES:
 numpy(http://numpy.scipy.org/)
 
-This module's entry point funtion is multiscale(...)
+ENTRY POINT: create_scales(input_name,dest_dir,start,stop,step,mul_order,round_to_int)
+             multiscale_compression(input_name,start,stop,step,compressor,level,decompress)
+             multiscale_entropy(input_name,start,stop,step,entropy_function,*args)
 """
 
 import os
 import numpy
-from .compress import compress
-from .entropy import entropy, calculate_std
+from tools.compress import compress
+from tools.entropy import entropy, calculate_std
 import logging
 
 module_logger=logging.getLogger('hrfanalyse.multiscale')
@@ -44,13 +49,22 @@ module_logger=logging.getLogger('hrfanalyse.multiscale')
 
 def create_scales(input_name,dest_dir,start,stop,step,mul_order,round_to_int):
     """
-    Create all the scales in a given interval.
+    Creates all the scales in a given interval.
 
-    Arguments: name of input directory/file, name of the output
-    directory, first scale to be calculated, last scale to be
-    calculated, jump between one scale and the next.
+    ARGUMENTS: String name of input directory/file, String name of the output
+    directory, int first scale to be calculated, int last scale to be
+    calculated, int jump between one scale and the next, int mul_order, bool 
+    round_to_int.
 
-    Return: None
+    RETURN: None.
+    
+    ALGORITHM:Create a new folder for each scale between start and stop (use step 
+    to jump between scale numbers). For each scale(s) build file with the same name 
+    as the original, where every s points are avareges to generate a new one. If
+    mul_order is not disabled (set to -1) when calculating a scale point multiply
+    all the original points by that mul_order. If round_to_int is set to True round
+    the resulting scale point and output only the integer value.
+    
     """
     for scale in range(start,stop,step):
         output_dir = os.path.join(dest_dir,"Scale %d"%scale)
@@ -63,12 +77,29 @@ def create_scales(input_name,dest_dir,start,stop,step,mul_order,round_to_int):
         if os.path.isdir(input_name):
             filelist = os.listdir(input_name)
             for filename in filelist:
-                create_scale(os.path.join(input_name,filename.strip()),output_dir,scale,mul_order,round_to_int)
+                create_scale(os.path.join(input_name,filename.strip()),
+                            output_dir,
+                            scale,
+                            mul_order,
+                            round_to_int)
         else:
-            create_scale(input_name.strip(),output_dir,scale,mul_order,round_to_int)
+            create_scale(input_name.strip(),
+                         output_dir,
+                         scale,
+                         mul_order,
+                         round_to_int)
 
 
 def multiscale_compression(input_name,start,stop,step,compressor,level,decompress):
+    """
+    Calculate the multiscale compression for a file or directory.
+    
+    ARGUMENTS: String input file/directory name, int start scale, int stop scale,
+    int step between scales, String compressor, int level, bool decompress.
+    
+    RETURN: Dictionary with filenames as keys and an array of CompressionData
+    (one for each scale) as values.
+    """
     if os.path.isdir(input_name):
         compression_table={}
         filelist = os.listdir(input_name)
@@ -76,7 +107,10 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
             compression_table[filename] = []
             for scale in range(start,stop,step):
                 file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                compression_results = compress(file_to_compress,compressor,level,decompress)
+                compression_results = compress( file_to_compress,
+                                                compressor,
+                                                level,
+                                                decompress)
                 compression_table[filename].append(compression_results[file_to_compress].original)
                 compression_table[filename].append(compression_results[file_to_compress].compressed)  
                 if decompress:
@@ -84,7 +118,10 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
     else:
         for scale in range(start,stop,step):
             file_to_compress=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,input_name)
-            compression_results = compress(file_to_compress,compressor,level,decompress)
+            compression_results = compress( file_to_compress,
+                                            compressor,
+                                            level,
+                                            decompress)
             compression_table[filename].append(compression_results[file_to_compress].original)
             compression_table[filename].append(compression_results[file_to_compress].compressed)  
             if decompress:
@@ -92,62 +129,75 @@ def multiscale_compression(input_name,start,stop,step,compressor,level,decompres
     return compression_table
 
 
-def multiscale_entropy(input_name,start,stop,step,entropy_function,*args):
+def multiscale_entropy(input_name,start,stop,step,entropy_function,dimension,tolerance):
+    """
+    Calculate the multiscale entropy for a file or directory.
+    
+    ARGUMENTS: String input file/directory name, int start scale, int stop scale,
+    int step between scales, String compressor, int dimension, float tolerance
+    
+    RETURN: Dictionary with filenames as keys and an array of EntropyData (one 
+    for each scale) as values.
+    """
     entropy_table={}
-    if ( entropy_function=='apen' or entropy_function=='apenv2'or
-         entropy_function=="sampen" ):
-        dim,tolerance = args
-        if os.path.isdir(input_name):
-            filelist= os.listdir(input_name)
-            files_stds = calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
-            tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
-            for filename in filelist:
-                entropy_table[filename]=[]
-                for scale in range(start,stop,step):
-                    file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                    entropy_results = entropy(file_in_scale,entropy_function,dim,tolerances[filename])
-                    entropy_table[filename].append(entropy_results[file_in_scale][1])
-        else:
-            files_stds = calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
-            tolerances = [ files_stds[filename]*tolerance for filename in files_stds]
-            entropy_table[input_name]=[]
-            filename = os.path.basename(input_name)
+    if os.path.isdir(input_name):
+        filelist= os.listdir(input_name)
+        files_stds = calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
+        tolerances = dict((filename,files_stds[filename]*tolerance) for filename in files_stds)
+        for filename in filelist:
+            entropy_table[filename]=[]
             for scale in range(start,stop,step):
                 file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
-                entropy_results = entropy(file_in_scale,entropy_function,dim,tolerances)
-                entropy_table[input_name].append(entropy_results[1])
+                entropy_results = entropy( file_in_scale,
+                                            entropy_function,
+                                            dimension,
+                                            {filename: tolerances[filename]})
+                entropy_table[filename].append(entropy_results[file_in_scale][1])
+    else:
+        files_stds = calculate_std(os.path.join("%s_Scales"%input_name,"Scale %d"%start))
+        tolerances = [ files_stds[filename]*tolerance for filename in files_stds]
+        entropy_table[input_name]=[]
+        filename = os.path.basename(input_name)
+        for scale in range(start,stop,step):
+            file_in_scale=os.path.join("%s_Scales"%input_name,"Scale %d"%scale,filename)
+            entropy_results = entropy(file_in_scale,
+                                        entropy_function,
+                                        dimension,
+                                        tolerances)
+            entropy_table[input_name].append(entropy_results[1])
     return entropy_table
 
 #IMPLEMENTATION
 def create_scale(inputfile, output_dir, scale, mul_order,round_to_int):
     """
-    This function creates a particular scale for one file.
+    This function creates a one scale for one file.
 
-    Arguments: name of file, directory where resulting file should be
-    saved, scale size.
+    ARGUMENTS: String name of file, String directory where resulting file should
+    be saved,int scale size,int mul_order, bool round_to_int.
 
-    Return: None
+    RETURN: None
 
-    Algorithm: Iteratively pass the file,on each iteration and
-    calculate the mean of N numbers starting after the last number
-    used in the previous iteration. Write the mean number into the
-    resulting file.
+    ALGORITHM: For a scale N, read the file,on each iteration extract an interval
+    of N values, calculate the mean of these numbers and save it in the resulting
+    file. Each iteration's interval starts after the last number used in the 
+    previous iteration.
+    
     """
     filename=os.path.basename(inputfile)
     line_index=0
-    with open(inputfile,"r") as fdin:
-        with open(os.path.join(output_dir,filename),"w") as fdout:
-            lines = fdin.readlines()
-            lines = list(map(float,lines))
+    with open(inputfile,"rU") as fdin:
+        lines = fdin.readlines()
+        lines = list(map(float,lines))
+    with open(os.path.join(output_dir,filename),"w") as fdout: 
+        while line_index+scale <=len(lines):
+            scaled_hrf = numpy.mean(lines[line_index:line_index+scale])
             if mul_order!=-1:
-                lines = [line*mul_order for line in lines]
-            while line_index+scale <=len(lines):
-                scaled_hrf = numpy.mean(lines[line_index:line_index+scale])
-                if round_to_int:
-                    fdout.write('%d\n'%round(scaled_hrf))
-                else:
-                    fdout.write('%.3f\n'%scaled_hrf)
-                line_index+=scale
+                scaled_hrf *=mul_order
+            if round_to_int:
+                fdout.write('%d\n'%round(scaled_hrf))
+            else:
+                fdout.write('%.3f\n'%scaled_hrf)
+            line_index+=scale
 
 
 #AUXILIARY FUNCTIONS
@@ -157,13 +207,43 @@ def add_parser_options(parser):
     parser or subparser, and are the optional arguments for
     the entry function in this module
 
-    Arguments: The parser to which you want the arguments added to.
+    ARGUMENTS: The parser to which you want the arguments added to.
     
-    Return:None
+    RETURN:None
     """
 
-    parser.add_argument("-start","--scale-start",metavar="SCALE",type=int,dest="scale_start",action="store",help="Start scales whith this amount of points. Default:[%(default)s]",default=2)
-    parser.add_argument("-stop","--scale-stop",metavar="SCALE",type=int,dest="scale_stop",action="store",help="Stop scales whith this amount of points. Default:[%(default)s]",default=20)
-    parser.add_argument("-step","--scale-step",metavar="STEP",type=int,dest="scale_step", action="store",help="Step between every two scales.Default:[%(default)s]", default=1)
-    parser.add_argument("--multiply",metavar="MUL ORDER",type=int,dest="mul_order",action="store",help="before calculating the resulting scale, multiply every number in the series by MUL ORDER, -1 disables this option; Default:[%(default)s]",default=-1)
-    parser.add_argument("--round-to-int",dest="round",action="store_true",default=False)
+    parser.add_argument("-start",
+                        "--scale-start",
+                        metavar="SCALE",
+                        type=int,
+                        dest="scale_start",
+                        action="store",
+                        help="Start scales whith this amount of points. Default:[%(default)s]",
+                        default=1)
+    parser.add_argument("-stop",
+                        "--scale-stop",
+                        metavar="SCALE",
+                        type=int,
+                        dest="scale_stop",
+                        action="store",
+                        help="Stop scales whith this amount of points. Default:[%(default)s]",
+                        default=20)
+    parser.add_argument("-step",
+                        "--scale-step",
+                        metavar="STEP",
+                        type=int,
+                        dest="scale_step", 
+                        action="store",
+                        help="Step between every two scales.Default:[%(default)s]", 
+                        default=1)
+    parser.add_argument("--multiply",
+                        metavar="MUL ORDER",
+                        type=int,
+                        dest="mul_order",
+                        action="store",
+                        help="before calculating the resulting scale, multiply every number in the series by MUL ORDER, -1 disables this option; Default:[%(default)s]",
+                        default=-1)
+    parser.add_argument("--round-to-int",
+                        dest="round",
+                        action="store_true",
+                        default=False)

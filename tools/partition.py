@@ -42,7 +42,6 @@ There are two entry point functions to this module:
 
 import os
 import sys
-import pickle
 import logging 
 
 module_logger=logging.getLogger('hrfanalyse.partition')
@@ -153,6 +152,7 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
         while line_index < len(lines):
             time, hrf = lines[line_index].split()
             if cumulative:
+                module_logger.debug("section_secs= %f, timestamp= %f"%(abs(float(time)-time_stamp),section_secs+((k-1)*gap_secs)))
                 section_test = abs(float(time)-time_stamp) <= section_secs+((k-1)*gap_secs)
             else:
                 section_test = time_elapsed+time_stamp <= section_secs*1000
@@ -163,6 +163,8 @@ def partition_file_blocks(inputfile,dest_dir,section_secs,gap_secs):
                     break
             else:
                 fdpart.close()
+                if line_index>=len(lines):
+                    break
                 k+=1
                 line_index=next_partition_start
                 block_minuts.append((real_start,real_end))
@@ -190,7 +192,7 @@ def set_time_varibles(line_index, time, time_elapsed, time_stamp, k, gap_secs, n
             next_real_start=float(time)-time_stamp
         else:
             next_real_start+=float(time)/1000
-        line_index+=1
+    line_index+=1
     return (line_index, time_elapsed, real_end, next_partition_start, next_real_start)
 
 
@@ -446,5 +448,5 @@ def add_parser_options_blocks(parser):
     
     Return:None
     """
-    parser.add_argument("-s", "--section", dest="section",metavar="MINUTES",type=int,action="store", help="Partitions size in minutes [default: %(default)s]", default=5)
-    parser.add_argument("-g","--gap",dest="gap",metavar="MINUTES",type=int,action="store",help="Gap between partitions [default: %(default)s]",default=5)
+    parser.add_argument("-s", "--section", dest="section",metavar="SECONDS",type=float,action="store", help="Partitions size in seconds [default: %(default)s]", default=60)
+    parser.add_argument("-g","--gap",dest="gap",metavar="SECONDS",type=float,action="store",help="Gap between partitions in seconds [default: %(default)s]",default=60)

@@ -33,30 +33,28 @@ Assymetrical Distances:
 CrossEntropy (entropy): NOT IMPLEMENTED
 
 
-This module's entry point function is distance(...)
+ENTRY POINT: distance(filename1, filename2, distance_definition, compressor, 
+level, decompress):
 """
 
 
 import sys
 import os
-import entropy
 import compress
 import tempfile
 
 #ENTRY POINT FUNCTION
-def distance(filename1,filename2,distance_definition,decompress,function,function_args):
-    """Calculate the distance between two files using some defenition of distance.
+def distance(filename1,filename2,distance_definition,compressor,level,decompress):
+    """Calculate the distance between two files.
 
-    Arguments: Both files names,distance definition (one of the
-    implemente definitions in this module), function is the particular
-    function to be used (ex:paq8l,hdf,sampen,etc.), function_arg are
-    arguments to be passed to the called function (ex:level for
-    compressor and matrix and tolerance for sampen).
+    ARGUMENTS: String file name 1, String file name 2, String distance definition
+    (nid, d1, d2), String compressor, int level, boolean decompress to decide 
+    whether to time decompression or not.
 
-    Return: A float that represents the distance between the two files.
+    RETURN: A float that represents the distance between the two files.
     """
     method_to_call = getattr(sys.modules[__name__],distance_definition)
-    return method_to_call(filename1,filename2,function,function_args,decompress)
+    return method_to_call(filename1,filename2,compressor,level,decompress)
 
 
 #IMPLEMENTATION
@@ -64,7 +62,7 @@ def distance(filename1,filename2,distance_definition,decompress,function,functio
 #Normalized Information Distance
 def nid(filename1,filename2,compressor,level,decompress):
     """
-    Use the compressor to calculate respectively c(f1.f2),c(f1) and
+    DEFINITION: Use the compressor to calculate respectively c(f1.f2),c(f1) and
     c(f2) and calculate the distance acording to the definition of
     normalized information distance:
 
@@ -75,14 +73,11 @@ def nid(filename1,filename2,compressor,level,decompress):
     Kolmogorov complexity concepts).
     
 
-    Arguments: filename for both files, compressor, level of compression.
+    ARGUMENTS: String file name 1, String file name 2, String compressor, int level
+    bool decompress.
     
-    Return: A float that represents the distance between the two
-    files.
+    RETURN: A float that represents the distance between the two files.
 
-    Algorithm: Both files are opened and their content concatenated in
-    a temporary file. Compression is then calculated for each file
-    including the concatenation file, and the formula is applied.
     """
     file_total_data = []
     temp_file = tempfile.NamedTemporaryFile(delete=False)
@@ -96,7 +91,10 @@ def nid(filename1,filename2,compressor,level,decompress):
 
     file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
     file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
-    temp_file_cdata = compress.compress(temp_file.name,compressor,level,decompress)[temp_file.name]
+    temp_file_cdata = compress.compress(temp_file.name,
+                                        compressor,
+                                        level,
+                                        decompress)[temp_file.name]
 
     if decompress:
         dist = (temp_file_cdata.time - min(file1_cdata.time,file2_cdata.time))/float(max(file1_cdata.time,file2_cdata.time))

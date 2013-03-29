@@ -32,7 +32,6 @@ import tools.partition
 import tools.compress
 import tools.separate_blocks
 import os
-import sys
 import csv
 import logging
 
@@ -79,12 +78,12 @@ if __name__=="__main__":
 
     logger.info("%s will be used to store file partitions"%dest_dir)
 
-    section_secs = options['section']*60
-    gap_secs= options['gap']*60
-
     block_minutes={}
     logger.info("Partitioning file in %d minutes intervals with %d gaps " %(options['section'],options['gap']))
-    block_minutes = tools.partition.partition_blocks(options['inputfile'],dest_dir,section_secs,gap_secs)
+    block_minutes = tools.partition.partition_blocks(options['inputfile'],
+                                                    dest_dir,
+                                                    options['section'],
+                                                    options['gap'])
     logger.info("Partitioning complete")
     
 

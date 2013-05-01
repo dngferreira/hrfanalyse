@@ -42,7 +42,7 @@ if __name__=="__main__":
     parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
 
     
-    tools.partition.add_parser_options(parser)
+    tools.partition.add_parser_options(parser, full_file_option=False)
     
     tools.compress.add_parser_options(parser)
 
@@ -88,7 +88,7 @@ if __name__=="__main__":
                                                 options['section'],
                                                 options['gap'],
                                                 options['start_at_end'],
-                                                options['full_file'],
+                                                True,
                                                 options['using_lines'])
     logger.info("Partitioning complete")
     

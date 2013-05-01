@@ -221,7 +221,7 @@ if __name__=="__main__":
 
     clean = subparsers.add_parser('clean', help='clean all the files in the given directory')
     tools.clean.add_parser_options(clean)
-    tools.partition.add_parser_options_chunks(clean)
+    tools.partition.add_parser_options(clean, full_file_option=True)
 
     compress = subparsers.add_parser('compress', help='compress all the files in the given directory')
     tools.compress.add_parser_options(compress)
@@ -291,17 +291,14 @@ if __name__=="__main__":
             writer.writerow(data_row)
         
     elif options['command']=='entropy':
-        if ((options['entropy']=='apen') or
-            (options['entropy']=='apenv2') or
-            (options['entropy']=='sampen')):
-            files_stds = tools.entropy.calculate_std(inputdir)
-            tolerances = dict((filename,files_stds[filename]*options["tolerance"]) for filename in files_stds)
-            resulting_dict = tools.entropy.entropy(inputdir, 
-                                                   options['entropy'],
-                                                   options['dimension'],
-                                                   tolerances)
-            
-            outfile= "%s_%s_%d_%f.csv" %(output_name, options['entropy'], options['dimension'], options['tolerance'])
+        files_stds = tools.entropy.calculate_std(inputdir)
+        tolerances = dict((filename,files_stds[filename]*options["tolerance"]) for filename in files_stds)
+        resulting_dict = tools.entropy.entropy(inputdir, 
+                                               options['entropy'],
+                                               options['dimension'],
+                                               tolerances)
+        
+        outfile= "%s_%s_%d_%f.csv" %(output_name, options['entropy'], options['dimension'], options['tolerance'])
         
         writer = csv.writer(open(outfile,"w"),delimiter=";")
         writer.writerow(["Filename","Entropy"])

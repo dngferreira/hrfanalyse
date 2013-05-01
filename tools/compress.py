@@ -174,7 +174,7 @@ def paq8l_compress(inputfile,level,decompress):
     decompress_time=None
     if decompress:
         decompress_time = min(timeit.repeat('subprocess.check_output(\'paq8l -d "%s.paq8l"\',shell=True,stderr=subprocess.STDOUT)'%inputfile,
-                                            number=10,
+                                            number=1,
                                             repeat=3,
                                             setup='import subprocess'))
         

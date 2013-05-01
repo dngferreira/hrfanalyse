@@ -42,11 +42,11 @@ if __name__=="__main__":
     parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
 
     
-    tools.partition.add_parser_options_blocks(parser)
+    tools.partition.add_parser_options(parser)
     
     tools.compress.add_parser_options(parser)
 
-    tools.separate_blocks.add_parser_options(parser)
+#    tools.separate_blocks.add_parser_options(parser)
         
 
     args = parser.parse_args()
@@ -80,10 +80,16 @@ if __name__=="__main__":
 
     block_minutes={}
     logger.info("Partitioning file in %d minutes intervals with %d gaps " %(options['section'],options['gap']))
-    block_minutes = tools.partition.partition_blocks(options['inputfile'],
-                                                    dest_dir,
-                                                    options['section'],
-                                                    options['gap'])
+    if options['gap']==0:
+        options['gap'] = options['section']
+    block_minutes = tools.partition.partition(options['inputfile'],
+                                                dest_dir,
+                                                options['partition_start'],
+                                                options['section'],
+                                                options['gap'],
+                                                options['start_at_end'],
+                                                options['full_file'],
+                                                options['using_lines'])
     logger.info("Partitioning complete")
     
 
@@ -96,28 +102,35 @@ if __name__=="__main__":
         
     for filename in compressed:
         if options['decompress']:
-            fboutname = "%s_decompress_%s"%(filename,options['compressor'])
+            fboutname = "%s_decompress_%s.csv"%(filename,options['compressor'])
         else:
-            fboutname = "%s_%s%s"%(filename,options['compressor'],options['level'])
-        with open(fboutname,"w") as fbout:
-            for blocknum in compressed[filename]:
-                if options['decompress']:
-                    fbout.write("%f\n"%compressed[filename][blocknum].time)
-                else:
-                    fbout.write("%d\n"%compressed[filename][blocknum].compressed)
+            fboutname = "%s_%s%s.csv"%(filename,options['compressor'],options['level'])
+        writer = csv.writer(open(fboutname,"w"),delimiter=";")
+        header = ["Block","Original Size","Compressed Size"]
+        if options['decompress']:
+            header.append("Decompression Time")
+        writer.writerow(header)    
+        for blocknum in compressed[filename]:
+            block_results = compressed[filename][blocknum]
+            row_data=[blocknum,block_results.original,block_results.compressed]
+            if options['decompress']:
+                row_data.append(block_results.time)
+            writer.writerow(row_data)
+                
+
     
-    logger.info("Using %s metric to separate blocks"%options['limits'])
-    below_lower, above_upper = tools.separate_blocks.apply_metric(compressed,block_minutes,options['limits'])
-    
-    
-    for filename in compressed:
-        csvname = '%s_%d_%d_%s_%s.csv'%(filename.strip(),options['section'],options['gap'],options['compressor'],options['limits'])
-        writer = csv.writer(open(csvname, 'wb'),delimiter=";")
-        writer.writerow(["Inferior"])
-        writer.writerow(["Bloco","Segundo Inicial","Segundo Final"])
-        for block in below_lower[filename]:
-            writer.writerow([block,below_lower[filename][block][0],below_lower[filename][block][1]])
-        writer.writerow(["Superior"])
-        writer.writerow(["Bloco","Segundo Inicial","Segundo Final"])
-        for block in above_upper[filename]:
-            writer.writerow([block,above_upper[filename][block][0],above_upper[filename][block][1]])
+##    logger.info("Using %s metric to separate blocks"%options['limits'])
+##    below_lower, above_upper = tools.separate_blocks.apply_metric(compressed,block_minutes,options['limits'])
+##    
+##    
+##    for filename in compressed:
+##        csvname = '%s_%d_%d_%s_%s.csv'%(filename.strip(),options['section'],options['gap'],options['compressor'],options['limits'])
+##        writer = csv.writer(open(csvname, 'wb'),delimiter=";")
+##        writer.writerow(["Inferior"])
+##        writer.writerow(["Bloco","Segundo Inicial","Segundo Final"])
+##        for block in below_lower[filename]:
+##            writer.writerow([block,below_lower[filename][block][0],below_lower[filename][block][1]])
+##        writer.writerow(["Superior"])
+##        writer.writerow(["Bloco","Segundo Inicial","Segundo Final"])
+##        for block in above_upper[filename]:
+##            writer.writerow([block,above_upper[filename][block][0],above_upper[filename][block][1]])

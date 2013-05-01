@@ -243,7 +243,8 @@ def test_time_limit(cumulative, time, time_stamp, time_elapsed, desired_time):
 def write_partition(lines, output_file, i_index, f_index):
     with open(output_file,"w") as fdout:
         while i_index < f_index:
-            fdout.write(lines[i_index])
+            time, hrf = lines[i_index].split()
+            fdout.write("%s\n"%hrf)
             i_index+=1
 
 

@@ -297,7 +297,7 @@ def sniffer(lines,start_at_end=False):
         time_stamp=moda
     return (cumulative,float(time_stamp))
 
-def add_parser_options(parser):
+def add_parser_options(parser, full_file_option):
     """
     """
 
@@ -306,4 +306,5 @@ def add_parser_options(parser):
     parser.add_argument("-s","--section",dest="section",metavar="SECONDS",action="store",type=float,help="Amount of time in seconds to be captured")
     parser.add_argument("-g", "--gap", dest="gap", metavar="SECONDS", type=float, action="store", help="gap between sections (if using --full-file option)", default=0)
     parser.add_argument("--use-lines",dest="using_lines", action="store_true", default=False,help="Partition using line count instead of time")
-    parser.add_argument("--full-file", dest="full_file", action="store_true", default=False, help="Partition the full file into blocks")
+    if full_file_option:
+        parser.add_argument("--full-file", dest="full_file", action="store_true", default=False, help="Partition the full file into blocks")

@@ -181,20 +181,14 @@ def partition_procedures(inputdir,options):
         logger.info("Creating %s for partitions"%outputdir)
         os.makedirs(outputdir)
     logger.info("Starting partition")
-    if options['using_lines']:
-        tools.partition.partition_chunk(inputdir,
-                                        outputdir,
-                                        "using_lines",
-                                        options['partition_start'],
-                                        options['partition_interval'],
-                                        start_at_end=options['start_at_end'])
-    else:
-        tools.partition.partition_chunk(inputdir,
-                                        outputdir,
-                                        "using_time",
-                                        options['partition_start']*60,
-                                        options['partition_interval']*60,
-                                        start_at_end=options['start_at_end'])
+    tools.partition.partition(inputdir,
+                                outputdir,
+                                options['partition_start'],
+                                options['section'],
+                                options['gap'],
+                                options['start_at_end'],
+                                options['full_file'],
+                                options['using_lines'])
     logger.info("Finished partitioning")
     return outputdir
 

@@ -20,10 +20,10 @@ This file is part of HRFAnalyse.
 _______________________________________________________________________________
 
 
-This module is very specific to our datasets. The dataset files are always either
-two columns -- the first is the time and the second the heat rate frequency or rr 
-interval -- or more columns where only the first two interset us --again the time
-and hrf wich in these files has to be divided by 1000 to get the usual three digit
+Disclaimer: This module is very specific to our datasets. The dataset files are
+always either two columns -- the first is the time and the second the heat rate frequency
+or rr interval -- or more columns where the first column is timestamps and the second
+the hrf which in these files has to be divided by 1000 to get the usual three digit
 number.
 
 Dependign on the passed options the module either extracts the time stamp and 
@@ -33,7 +33,7 @@ Optionaly a limit may be applied to eliminate signal loss, we consider the
 signal to be lost if hrf is bellow 50 or above 250. If a particular line is 
 considered as signal lost it is ommited from the resulting file.
 
-This module's entry point function in clean(input_name,dest_dir,keep_time=False,
+ENTRY POINT: clean(input_name,dest_dir,keep_time=False,
 apply_limits=False)
 """
 
@@ -46,14 +46,11 @@ module_logger=logging.getLogger('hrfanalyse.clean')
 
 def clean(input_name,dest_dir,keep_time=False, apply_limits=False):
     """
+    (str,str,bool,bool,bool) -> Nonetype
+
     Cleans the file or every file from a directory named input_name,
-    and saves the resulting files in dest_dir
-
-    ARGUMENTS: Strin Input directory, String output directory, bool to decide 
-    whether or not to keep the time column, bool to determine if limits(50-250) 
-    are applied.  keep_time and apply_limits are optional to call this function.
-
-    RETURN: None
+    and saves the resulting files in dest_dir, optionaly the
+    time stamp is kept and the limits(50-250) are applied.
 
     """
     module_logger.debug("The input name received: %s"%input_name)
@@ -75,19 +72,16 @@ def clean(input_name,dest_dir,keep_time=False, apply_limits=False):
 
 def clean_file(inputfile, dest_file , keep_time, apply_limits):
     """
+
+    (str, str, bool, bool) -> NoneType
+
     Clean operation of a single file.
-    
-    ARGUMENTS: String name of input file, String name of output file, keep_time 
-    boolean indication whether timestamps should be preserved, apply_limits boolean
-    that indicates if signal loss should be eliminated or not.
-    
-    RETURN: None
     
     """
     with open(inputfile,"rU") as fdin:
         with open(dest_file,"w") as fdout:
             for line in fdin:
-                data =  line.split(',')
+                data =  line.split()
                 
                 #to clean any headers the file might have, this operates under the assumtion
                 #headers never start with a number.
@@ -99,30 +93,28 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
                     hrf = float(data[1])
                     if(hrf >= 1000):
                         hrf = round(float(data[1])/1000)
-                    if apply_limits and hrf>= 50 and hrf<=250:
-                        if keep_time:
-                            time = data[0]
-                            fdout.write("%s "%time)
-                        fdout.write("%.3f\n"%hrf)
-                    else:
+                    if not apply_limits:
                         if keep_time:
                             time = data[0]
                             fdout.write("%s "%time)
                         fdout.write("%.3f\n"%hrf)    
-                        
+                    elif hrf>= 50 and hrf<=250:
+                        if keep_time:
+                            time = data[0]
+                            fdout.write("%s "%time)
+                        fdout.write("%.3f\n"%hrf)
 
 
 #AUXILIARY FUNCTIONS
 
 def add_parser_options(parser):
     """
+    (argparse.ArgumentParser) -> NoneType
+
     !!!Auxiliary function!!!  These are arguments for an argparse
     parser or subparser, and are the optional arguments for
     the entry function in this module
 
-    ARGUMENTS: The parser to which you want the arguments added to.
-    
-    RETURN:None
     """
 
     parser.add_argument("-kt",

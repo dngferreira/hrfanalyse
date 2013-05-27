@@ -104,7 +104,11 @@ if __name__=="__main__":
         options['level']=tools.compress.set_level(options)
         for filename in block_minutes:
             logger.info("Compression started for %s" %os.path.join(dest_dir,"%s_blocks"%filename))
-            compressed[filename] = tools.compress.compress(os.path.join(dest_dir,"%s_blocks"%filename),options['compressor'],options['level'],options['decompress'])
+            #The extensions had to be removed from the original name when
+            #creating the block for compatibility with windows, so this line
+            #changes the filename
+            bfile = os.path.splitext(filename)[0]
+            compressed[bfile] = tools.compress.compress(os.path.join(dest_dir,"%s_blocks"%bfile),options['compressor'],options['level'],options['decompress'])
             logger.info("Compression complete")
         
         for filename in compressed:

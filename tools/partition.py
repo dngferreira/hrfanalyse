@@ -96,7 +96,7 @@ def partition_by_lines(input_name, dest_dir, starting_point, section, gap, start
 
     with open(input_name,'rU') as fdin:
         lines = fdin.readlines()
-    filename = os.path.basename(input_name)
+    filename = os.path.splitext(os.path.basename(input_name))[0]
     if full_file:
         k=1
         file_block_dir = os.path.join(dest_dir,"%s_blocks"%filename)
@@ -134,7 +134,7 @@ def next_indexes_lines(p_init,p_end, gap):
 def partition_by_time(input_name, dest_dir, starting_point, section, gap, start_at_end, full_file):
     with open(input_name,'rU') as fdin:
         lines= fdin.readlines()
-    filename = os.path.basename(input_name)
+    filename = os.path.splitext(os.path.basename(input_name))[0]
     if start_at_end:
         cumulative, time_stamp = sniffer(lines[-SAMPLE_SIZE:], start_at_end)
     else:
@@ -243,7 +243,10 @@ def test_time_limit(cumulative, time, time_stamp, time_elapsed, desired_time):
 def write_partition(lines, output_file, i_index, f_index):
     with open(output_file,"w") as fdout:
         while i_index < f_index:
-            time, hrf = lines[i_index].split()
+            try:
+                time, hrf = lines[i_index].split()
+            except ValueError:
+                hrf = lines[i_index].strip()
             fdout.write("%s\n"%hrf)
             i_index+=1
 

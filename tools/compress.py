@@ -62,24 +62,25 @@ except ImportError:
 #from memoize import Memoize
 
 #DATA TYPE DEFINITIONS
-"""This is a data type defined to be used as a return for compression; it
-contains the original size of the file, the size of the resulting compressed 
-file and the time it takes to decompress it(null if the timing is not run)"""
+"""This is a data type defined to be used as a return for compression it has
+three atributes original contains the original size of the file, compressed,
+the size of the resulting compressed file and, time the time it takes to
+decompress (null if the timing is not run)"""
 CompressionData = namedtuple('CompressionData','original compressed time')
 
 #ENTRY POINT FUNCTION
 #@Memoize
 def compress(input_name,compression_algorithm,level,decompress=False):
-    """Given a file or directory named input_name, apply the desired
+    """
+
+    (str,str,int,bool)-> dict of str : CompressionData
+
+    Given a file or directory named input_name, apply the desired
     compression algorithm to all the files. Optionaly a timming on 
     decompression may also be run.
 
-    ARGUMENTS: String name of the directory/file where compression should be
-    applied, String compression algorithm to use, int level of compression, bool
-    whether or not to preform a timming for the decompression.
-    
-    RETURN: Dictionary, whith filenames as keys and CompressionData as values.
-
+    Levels will be set to the compressor's maximum or minimum respectively
+    if the level passed as argument is not valid.
     """
 
     compressed ={}
@@ -106,27 +107,16 @@ def compress(input_name,compression_algorithm,level,decompress=False):
 #IMPLEMENTATION
 def gzip_compress(inputfile,level,decompress): 
 
-    """ 
+    """
+    (str, int, bool)-> CompressionData
+
     Compresses one file using the python implementation of zlib.
-
-    ARGUMENTS: String name of the file to be compressed, int level of compression,
-    bool whether or not decompression time should be calculated.
-
-    RETURN: CompressionData object.
-
-    Algorithm: The input file is opened and it's content extracted
-    to a string wich is used to crate a memoyview, the compress function from 
-    the zlib module is called with the byte buffer exposed by the memoryview.
-    The length of the string(or bytearray in python3) returned by the compress 
-    method is the size of the compressed data. If decompress is True the 
-    decompression operation is run and the minimum run time is added to the 
-    CompressionData type.
 
     NOTE: Although this uses the name gzip the actual tool being used
     is python's zlib which has the actual implementation of the deflate 
     compression algorithm. This is possible because the only difference between 
     gzip and zlib is the header added to the compressed file, which is not in the 
-    resulting compressed string.
+    resulting compressed string, nor is it added in our case.
     """
     
     original_size= int(os.stat(inputfile).st_size)
@@ -150,20 +140,11 @@ def gzip_compress(inputfile,level,decompress):
 
 def paq8l_compress(inputfile,level,decompress):
     """
+    (str, int, bool) -> CompressionData
+
     Compresses one file using the paq8l compressor, the size is
     determined by quering the file paq8l creates, this temporary file
     is removed at the end of this function.
-
-    ARGUMENTS: String name of the file to be compressed, int level of compression,
-    bool whether or not decompression time should be calculated.
-
-    RETURN: CompressionData object.
-
-    ALGORITHM: The filename is passed to paq8l for compression wich generates a 
-    file with the same name plus the extension .paq8l. A query is made on the 
-    system to find the size of the generated  file. If decompressio is True the 
-    decompression of this file is run three times and the minimum time is recorded. 
-    The temporary compressed file is deleted.
 
     """
     subprocess.check_output('paq8l -%d "%s"'%(level,inputfile),
@@ -187,32 +168,21 @@ def paq8l_compress(inputfile,level,decompress):
 
 def lzma_compress(inputfile,level,decompress):
     """
+    (str,int,bool) -> CompressionData
+    
     Compresses one file using the python implementation of lzma.
-
-    ARGUMENTS: String name of the file to be compressed, int level of compression,
-    bool whether or not decompression time should be calculated.
-
-    RETURN: CompressionData object.
-
-    ALGORITHM: The input file is opened and it's content extracted to a string 
-    which is used to crate a memoyview, the compress function from the lzma module
-    is called with the byte buffer exposed by the memoryview.
-    The length of the string(or bytearray in python3) returned by the compress 
-    method is the size of the compressed data. If decompress is True the 
-    decompression operation is run and the minimum run time is added to the 
-    CompressionData type.
     
     NOTE: The lzma module was created for python3, the backported version for 
     python2.7, does not have a level parameter, a decision was made to keep this
-    code compatible for Python2.7 so the level parameter is never used ( by 
-    default the level used is 6).
+    code backwards compatible so the level parameter is never used. The 
+    default the level being used is 6.
      """
 
     original_size= int(os.stat(inputfile).st_size)
     with open(inputfile,"rU") as fdorig:
         origlines=fdorig.read()
     origtext = memoryview(bytearray(origlines,"utf8"))
-    compressedtext = memoryview(lzma.compress(origtext.tobytes()))#, preset=level available in python3
+    compressedtext = memoryview(lzma.compress(origtext.tobytes()))
     compressed_size = len(compressedtext)
 
     decompress_time=None
@@ -230,20 +200,9 @@ def lzma_compress(inputfile,level,decompress):
 
 def bzip2_compress(inputfile,level,decompress):
     """
+    (str, int, bool) -> CompressionData
+    
     Compresses one file using the python implementation of bzip2.
-
-    ARGUMENTS: String name of the file to be compressed, int level of compression,
-    bool whether or not decompression time should be calculated.
-
-    RETURN: CompressionData object.
-
-    ALGORITHM: The input file is opened and it's content extracted to a string 
-    which is used to crate a memoyview, the compress function from the bzip 
-    module is called with the byte buffer exposed by the memoryview.
-    The length of the string(or bytearray in python3) returned by the compress 
-    method is the size of the compressed data. If decompress is True the 
-    decompression operation is run and the minimum run time is added to the 
-    CompressionData type.
 
     """
 
@@ -266,18 +225,9 @@ def bzip2_compress(inputfile,level,decompress):
 
 def ppmd_compress(inputfile,level,decompress):
     """
+    (str, int, bool) -> CompressionData
+
     Compresses one file using the ppmd compressor.
-
-    ARGUMENTS: String name of the file to be compressed, int level of compression,
-    bool whether or not decompression time should be calculated.
-
-    RETURN: CompressionData object.
-
-    ALGORITHM: The filename is passed to ppmd for compression which generates a 
-    file with the same name plus the extension .ppmd.  A query is made on the 
-    system to find the what size of the generated file. If decompressio is True 
-    the decompression of this file is run three times and the minimum time is 
-    recorded. The temporary compressed file is deleted.
     
     NOTE: This algorithm does not have a standard level, but the model
     order behaves as a compression level, so level here refers to the
@@ -303,18 +253,9 @@ def ppmd_compress(inputfile,level,decompress):
 
 def spbio_compress(inputfile,level,decompress):
     """
+    (str, int, bool) -> CompressionData
+
     Compresses one file using the spbio tool.
-
-    ARGUMENTS: String name of the file to be compressed, int level of compression.
-    bool whether or not decompression time should be calculated.
-
-    RETURN: CompressionData object.
-
-    ALGORITHM: The filename is passed to paq8l for compression which generates a
-    file with the same name plus the extension .sph. A query is made on the system
-    to find the what size of the generated file. Although it is in the options at
-    this moment the decompress operation is not implemented. The temporary 
-    compressed file is deleted.
 
     NOTE: This compressor is only available for Windows and has no
     compression levels.
@@ -330,7 +271,8 @@ def spbio_compress(inputfile,level,decompress):
 
 def test_compressors():
     """
-
+    (NoneType) -> NoneType
+    
     !!!Auxiliary function!!! Function to test the system path for available
     compressors from within the ones that are implemented.
 
@@ -354,6 +296,7 @@ def test_compressors():
                 available[compressor]=compressor_list[compressor]
     return available
 
+"""A constant variable with the list of available compressors int the path"""
 AVAILABLE_COMPRESSORS=test_compressors()
 
 

@@ -33,7 +33,7 @@ class TestCompressModule(unittest.TestCase):
 
         
     @unittest.skipIf('paq8l' not in tools.compress.AVAILABLE_COMPRESSORS,
-                     "Paq8l not installed in path")
+                     "Paq8l not installed: paq8l avalable at cs.fit.edu/~mmahoney/compression/")
     def test_paq8l_max(self):
         """
     Test the result of calling the paq8l compressor with maximum compression level

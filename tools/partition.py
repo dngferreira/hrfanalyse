@@ -96,6 +96,7 @@ def partition_by_lines(input_name, dest_dir, starting_point, section, gap, start
 
     with open(input_name,'rU') as fdin:
         lines = fdin.readlines()
+    lines = [line for line in lines if line!="\n"]
     filename = os.path.splitext(os.path.basename(input_name))[0]
     if full_file:
         k=1
@@ -134,6 +135,7 @@ def next_indexes_lines(p_init,p_end, gap):
 def partition_by_time(input_name, dest_dir, starting_point, section, gap, start_at_end, full_file):
     with open(input_name,'rU') as fdin:
         lines= fdin.readlines()
+    lines = [line for line in lines if line!="\n"]
     filename = os.path.splitext(os.path.basename(input_name))[0]
     if start_at_end:
         cumulative, time_stamp = sniffer(lines[-SAMPLE_SIZE:], start_at_end)
@@ -157,7 +159,6 @@ def partition_by_time(input_name, dest_dir, starting_point, section, gap, start_
  
     else:
         p_init, p_end = initial_indexes_time(lines, starting_point, section,start_at_end, cumulative, time_stamp)
-        print("pinit:%d, pend:%d"%(p_init,p_end))
         write_partition(lines, os.path.join(dest_dir,filename),p_init,p_end)
     return []
 

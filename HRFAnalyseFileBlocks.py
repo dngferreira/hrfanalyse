@@ -110,7 +110,6 @@ if __name__=="__main__":
             bfile = os.path.splitext(filename)[0]
             compressed[bfile] = tools.compress.compress(os.path.join(dest_dir,"%s_blocks"%bfile),options['compressor'],options['level'],options['decompress'])
             logger.info("Compression complete")
-        
         for filename in compressed:
             if options['decompress']:
                 fboutname = "%s_decompress_%s.csv"%(filename,options['compressor'])
@@ -121,8 +120,8 @@ if __name__=="__main__":
             if options['decompress']:
                 header.append("Decompression Time")
             writer.writerow(header)    
-            for blocknum in compressed[filename]:
-                block_results = compressed[filename][blocknum]
+            for blocknum in range(1,len(compressed[filename])+1):
+                block_results = compressed[filename]['%s_%d'%(filename,blocknum)]
                 row_data=[blocknum,block_results.original,block_results.compressed]
                 if options['decompress']:
                     row_data.append(block_results.time)
@@ -143,25 +142,9 @@ if __name__=="__main__":
             writer = csv.writer(open(fboutname,"w"),delimiter=";")
             header = ["Block","Entropy"]
             writer.writerow(header)    
-            for blocknum in entropy[filename]:
-                block_results = entropy[filename][blocknum]
+            for blocknum in range(1,len(entropy[filename])+1):
+                block_results = entropy[filename]['%s_%d'%(filename,blocknum)]
                 row_data=[blocknum,block_results.entropy]
                 writer.writerow(row_data)
         
 
-    
-##    logger.info("Using %s metric to separate blocks"%options['limits'])
-##    below_lower, above_upper = tools.separate_blocks.apply_metric(compressed,block_minutes,options['limits'])
-##    
-##    
-##    for filename in compressed:
-##        csvname = '%s_%d_%d_%s_%s.csv'%(filename.strip(),options['section'],options['gap'],options['compressor'],options['limits'])
-##        writer = csv.writer(open(csvname, 'wb'),delimiter=";")
-##        writer.writerow(["Inferior"])
-##        writer.writerow(["Bloco","Segundo Inicial","Segundo Final"])
-##        for block in below_lower[filename]:
-##            writer.writerow([block,below_lower[filename][block][0],below_lower[filename][block][1]])
-##        writer.writerow(["Superior"])
-##        writer.writerow(["Bloco","Segundo Inicial","Segundo Final"])
-##        for block in above_upper[filename]:
-##            writer.writerow([block,above_upper[filename][block][0],above_upper[filename][block][1]])

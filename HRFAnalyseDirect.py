@@ -202,7 +202,7 @@ def clean_procedures(inputdir, options):
         logger.info("Creating clean directory %s"%outputdir)
         os.makedirs(outputdir)
     logger.info("Starting clean procedures")
-    if options['keep_time'] or options['partition_interval']:
+    if options['keep_time'] or options['section']:
         tools.clean.clean(inputdir,outputdir,keep_time=True,apply_limits=options['apply_limits'])
     else:
         tools.clean.clean(inputdir,outputdir,apply_limits=options['apply_limits'])
@@ -261,7 +261,7 @@ if __name__=="__main__":
 
     if options['command']=='clean':
         outputdir = clean_procedures(inputdir,options)
-        if options['partition_interval']:
+        if options['section']:
             outputdir = partition_procedures(outputdir,options)
         inputdir = outputdir
 

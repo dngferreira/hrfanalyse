@@ -56,7 +56,9 @@ except ImportError:
         lzma_available=True
     except ImportError:
         lzma_available=False
+import logging
 
+module_logger=logging.getLogger('hrfanalyse.compress')
 
 
 #from memoize import Memoize
@@ -302,13 +304,12 @@ AVAILABLE_COMPRESSORS=test_compressors()
 
 def add_parser_options(parser):
     """
+    (argparse.ArgumentParser) -> NoneType
+
     !!!Auxiliary function!!!  These are arguments for an argparse
     parser or subparser, and are the parameters taken by the entry function 
     in this module
 
-    ARGUMENTS: The parser to which you want the arguments added to.
-    
-    RETURN: None
     """
     parser.add_argument("-c",
                         "--compressor",
@@ -332,18 +333,19 @@ def add_parser_options(parser):
 
 def set_level(options):
     """
+    (dict of str: object) -> int
+
     !!!Auxilary function!!!
-    Changes the value of level in the options to be within the maximum or minimum 
+    Return a valid value for level in the options to be within the maximum or minimum 
     levels for the chosen compressor.
     
-    ARGUMENTS: A dictionary of options with a compressor key for the chosen compressor.
-    
-    RETURN: None
     """
     if ((not options['level']) or 
         (options['level']> AVAILABLE_COMPRESSORS[options['compressor']][1])):
+        module_logger.info("Your chosen level was above the maximum, setting level to maximum: {0}".format(options['level']))
         level= AVAILABLE_COMPRESSORS[options['compressor']][1]
     elif options['level']< AVAILABLE_COMPRESSORS[options['compressor']][0]:
+        module_logger.info("Your chosen level was below minimum, setting level to minimum: {0}".format(options['level']))
         level= AVAILABLE_COMPRESSORS[options['compressor']][0]
     else:
         level= options['level']

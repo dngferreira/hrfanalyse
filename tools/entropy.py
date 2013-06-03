@@ -21,8 +21,8 @@ _______________________________________________________________________________
 
 This module implements the calculation of entropy (sample and aproximate since 
 after some testing these seem to be the only ones that have significant results 
-for our specific purposes. Some of the functions are calls to some pyeeg 
-implementation. The pyeeg module available at this time does not work for Python3.
+for our specific purposes. Some of the functions are calls to the pyeeg 
+implementation.
 
 
 MODULE EXTERNAL DEPENDENCIES:
@@ -33,9 +33,8 @@ ENTRY POINT: entropy(input_name,function,dimension,tolerances)
              calculate_std(input_name)
 """
 
-#comment this line if you intend to use Python3
-from tools.pyeeg import samp_entropy,ap_entropy
 import sys
+from tools.pyeeg import samp_entropy,ap_entropy
 import os
 import numpy
 from collections import namedtuple
@@ -54,12 +53,9 @@ def entropy(input_name,function,dimension,tolerances):
     Given a file or directory named input_name, calculate the desired
     entropy to all the files.
 
-    ALGORITHM: Retrieve a complete list of all the files in the
-    directory.  For every file in the list calculate the entropy using
-    the user chosen function.
-
     NOTE: This functions last two parameters are specific for the entropy 
-    calculating algorithms we are using.
+    calculating algorithms we are using (both apen and sampen use the dimension
+    and tolerance parameters.
     """
 
     method_to_call= getattr(sys.modules[__name__],function)
@@ -77,17 +73,10 @@ def entropy(input_name,function,dimension,tolerances):
 
 def calculate_std(input_name):
     """
+    (str) -> dict of str : float
+
     Function to calculate the standard deviation for the values in a file/directory.
-    This is not a conventional entry point as it does not calculate any type of 
-    entropy, but since it is necessary to define tolerances, this is the best place
-    for it.
-    
-    ARGUMENTS: String input_name name of the file/directory.
-    
-    RETURN: Dictionary with filenames as keys and their standard deviation as values.
-    
-    ALGORITHM: For each file call the implementation calculate_file_std, put the
-    returned std in the dictionary.
+    Returns a dictionary that associate filenames to their respective std.
     
     """
     files_std = {}
@@ -102,12 +91,11 @@ def calculate_std(input_name):
 #IMPLEMENTATION
 def apen(filename,dimension,tolerance):
     """
-    A function that uses the pyeeg implementation of aproximate entropy to 
-    calculte the entropy for one file. 
-    
-    ARGUMENTS: String filename, int dimension, float tolerance
-    
-    RETURN: EntropyData type
+    (str, int, float) -> EntropyData
+
+    Given a filename, calculate the aproximate entropy. 
+
+    NOTE: Pyeeg implementation    
     """
     with open(filename,"r") as file_d:
         file_data = file_d.readlines()
@@ -116,18 +104,23 @@ def apen(filename,dimension,tolerance):
 
 def apenv2(filename,dimension,tolerance):
     """
+    (str, int, float) -> EntropyData
+    
     An implementation of Aproximate entropy. The explanation of the algorithm is 
     a bit long because it is a little different from the original version it was 
-    based on. It is still an O(mn2) worst case algorithm.
-    
-    ARGUMENTS: String filename, int dimension, float tolerance
-    
-    RETURN: EntropyData
-    
-    ALGORITHM: Based on the algorithm described in the book referenced bellow, 
+    based on. Although it is still an O(mn2) worst case algorithm it tends to get
+    better time by discarting some calculations.
+
+    BIBLIGRAPHICAL REFERENCE:
+    Fusheng, Y., Bo, H. and Qingyu, T. (2000) Approximate Entropy and Its 
+    Application to Biosignal Analysis, in Nonlinear Biomedical Signal 
+    Processing: Dynamic Analysis and Modeling, Volume 2 (ed M. Akay), John Wiley
+    & Sons, Inc., Hoboken, NJ, USA. doi: 10.1002/9780470545379.ch3
+        
+    ALGORITHM: Based on the algorithm described in the book referenced, 
     this implementation actualy calculates the Nm and Nm+1(Nmp) vectors directly. 
-    The following description is an explanation to help you understand why we jump
-    directly to building Nm.
+    The following description is an explanation to help you understand why it is
+    possible to jump directly to building Nm.
     
     Suppose we started by directly calculating the auxilary matrix S where every
     cell S(i,j) is either 0 if the absolute distance between points i and j is 
@@ -165,12 +158,6 @@ def apenv2(filename,dimension,tolerance):
     we already know to be 0. This is done by creating a burned_indexes that contains 
     the columns we want to jump over in the upcoming rows. The columns are kept 
     in a dictionary so the test if a particular column is to jumped is O(1).
-    
-    BIBLIGRAPHICAL REFERENCE:
-    Fusheng, Y., Bo, H. and Qingyu, T. (2000) Approximate Entropy and Its 
-    Application to Biosignal Analysis, in Nonlinear Biomedical Signal 
-    Processing: Dynamic Analysis and Modeling, Volume 2 (ed M. Akay), John Wiley
-    & Sons, Inc., Hoboken, NJ, USA. doi: 10.1002/9780470545379.ch3
     
     """
     
@@ -220,12 +207,6 @@ def apenv2(filename,dimension,tolerance):
 
     return EntropyData(len(file_data),Ap_En)
 
-
-def transform_to_space(m,data):
-    pointArray=[]
-    for index in range(len(data)):
-        pointArray[index]=[axis for axis in data[i:i+m]]
-    return pointArray
         
 
 #def fast_apen(filename,args):
@@ -244,12 +225,11 @@ def transform_to_space(m,data):
 
 def sampen(filename,dimension,tolerance):
     """
-    A function that uses the pyeeg implementation of sample entropy to 
-    calculte the entropy for one file. 
-    
-    ARGUMENTS: String filename, int dimension, float tolerance
-    
-    RETURN: EntropyData type
+    (str, int, float) -> EntropyData
+
+    Given a filename, calculate the sample entropy. 
+
+    NOTE: Pyeeg implementation    
     """
     with open(filename,'r') as file_d:
         file_data= file_d.readlines()
@@ -258,11 +238,10 @@ def sampen(filename,dimension,tolerance):
 
 def calculate_file_std(filename):
     """
+    (str) -> float
+    
     Function to calculate the standard deviation of the values in a single file.
     
-    ARGUMENTS: String filename.
-    
-    RETURN: float standard deviation of file data.
     """
     with open(filename,"rU") as fdin:
         file_data = fdin.readlines()
@@ -273,13 +252,12 @@ def calculate_file_std(filename):
 
 def add_parser_options(parser):
     """
+    (argparse.ArgumentParser) -> NoneType
+
     !!!Auxiliary function!!!  These are arguments for an argparse
     parser or subparser, and are the optional arguments for
     the entry function in this module
 
-    Arguments: The parser to which you want the arguments added to.
-    
-    Return:None
     """
     entropy_parsers = parser.add_subparsers(help='Diferent methods for calculating entropy', dest="entropy")
 

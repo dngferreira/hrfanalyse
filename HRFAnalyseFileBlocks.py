@@ -103,11 +103,11 @@ if __name__=="__main__":
         compressed={}        
         options['level']=tools.compress.set_level(options)
         for filename in block_minutes:
+            bfile = os.path.splitext(filename)[0]
             logger.info("Compression started for %s" %os.path.join(dest_dir,"%s_blocks"%filename))
             #The extensions had to be removed from the original name when
             #creating the block for compatibility with windows, so this line
             #changes the filename
-            bfile = os.path.splitext(filename)[0]
             compressed[bfile] = tools.compress.compress(os.path.join(dest_dir,"%s_blocks"%bfile),options['compressor'],options['level'],options['decompress'])
             logger.info("Compression complete")
         for filename in compressed:
@@ -129,10 +129,11 @@ if __name__=="__main__":
     elif options['command']=='entropy':
         entropy={}
         for filename in block_minutes:
-            logger.info("Entropy calculations started for %s" %os.path.join(dest_dir,"%s_blocks"%filename))
-            files_stds = tools.entropy.calculate_std(os.path.join(dest_dir,"%s_blocks"%filename))
+            bfile = os.path.splitext(filename)[0]
+            logger.info("Entropy calculations started for %s" %os.path.join(dest_dir,"%s_blocks"%bfile))
+            files_stds = tools.entropy.calculate_std(os.path.join(dest_dir,"%s_blocks"%bfile))
             tolerances = dict((filename,files_stds[filename]*options["tolerance"]) for filename in files_stds)
-            entropy[filename] = tools.entropy.entropy(os.path.join(dest_dir,"%s_blocks"%filename),
+            entropy[bfile] = tools.entropy.entropy(os.path.join(dest_dir,"%s_blocks"%bfile),
                                                       options['entropy'],
                                                       options['dimension'],
                                                       tolerances)

@@ -25,7 +25,8 @@ _______________________________________________________________________________
 
 HRFAnalyseDirectory is a command line interface to apply operations
 (compression, entropy, clean, partition) from the tools module
-directly to a file or files in a directory. The objective here is to study the results of applying the compression or entropy directly on the files.
+directly to a file or files in a directory. The objective here is 
+to study the results of applying the compression or entropy directly on the files.
 
 Usage: ./HRFAnalyseDirectory.py INPUT_DIRECTORY COMMAND COMMAND_OPTIONS
 
@@ -57,14 +58,15 @@ clean: This command allows you to apply clean and partitioning
 
        --start-at-end        Partition from end of file instead of beginning
        
-       -ps INTERVAL, --partition-start INTERVAL
-                             Time gap between the start of the file and the start
-                                of the interval
-
-       -pi MINUTES, --partition-interval MINUTES
-                             Amount of time in minutes to be captured
-
-       --use_lines           Partition using line count instead of time
+       -ds SECONDS, --defered-start SECONDS
+                        Time gap between the start of the file and the start
+                        of the interval; default:[0]
+       -s SECONDS, --section SECONDS
+                        Amount of time in seconds to be captured
+       -g SECONDS, --gap SECONDS
+                        gap between sections (if using --full-file option)
+       --use-lines           Partition using line count instead of time
+       --full-file           Partition the full file into blocks
 
 compress: This command allows you to compress all the files in the
      given directory.  The list of available compressors is
@@ -98,7 +100,7 @@ entropy: This command allows you to calculate the entropy for all
      files in a given directory.
     
      OUTCOME: Calling this commmand will create a csv file using ';'
-     as a field delimiter. The compression algorith and the
+     as a field delimiter. The entropy measure and the
      compression level used are used to name the resulting file. This
      file will be created in the parent of the directory we are
      working with. Each file is represented by a row with two columns,
@@ -109,18 +111,10 @@ entropy: This command allows you to calculate the entropy for all
 
      sampen              Sample Entropy
      apen                Aproximate Entropy
-     specen              spectral entropy help
-     hurst               Hurst Exponent help
-     dfa                 Detrended Fluctuation Analysis help
-     hjorth              Hjorth mobility and complexity help
-     pfd                 Petrosian Fractal Dimension help
-     hfd                 Higuchi Fractal Dimension help
-     fi                  Fisher Information help
-     svden               Singular Value Decomposition Entropy help
+     apenv2              A slightly different implementation of Aproximate Entropy
 
-    For a particular function's documentation please look at:
+    For a sampen and apen documentation please look at:
              pyeeg (http://code.google.com/p/pyeeg/downloads/list)
-             sampen(http://www.physionet.org/physiotools/sampen/)
              
    All functions take arguments as inner options, to look at a
    particular entropy's options type:
@@ -129,36 +123,46 @@ entropy: This command allows you to calculate the entropy for all
 
 
 Examples :
-Assume FOO is a directory.
+
 
   =>Clean:
      Retrieve the hrf:
-      ./HRFAnalyseDirectory.py FOO clean
+     ./HRFAnalyseDirect.py unittest_dataset clean
 
       Retrieve the timestamps and hrf from the first hour: 
-     ./HRFAnalyseDirectory.py FOO clean -kt -pi 60
+     ./HRFAnalyseDirect.py unittest_dataset clean -kt -s 3600
 
 
      Retrive the valid hrf(50<=hrf<=250) for the last hour:
-     ./HRFAnalyseDirectory.py FOO clean -pi 60 --apply_limits --start-at-end
+     ./HRFAnalyseDirect.py unittest_dataset clean -s 3600 --apply_limits --start-at-end
 
      Retrive the hrf for the interval 1m--61m
-     ./HRFAnalyseDirectory.py FOO clean -ps 1 -pi 60 
+     ./HRFAnalyseDirect.py unittest_dataset clean -ds 1 -s 3600 
 
      Retrive the hrf from first 2000 lines:
-     ./HRFAnalyseDirectory.py FOO clean -pi 2000 --use_lines
+     ./HRFAnalyseDirect.py unittest_dataset clean -s 2000 --use_lines
+
+     Break the file into 5 minute blocks where the blocks don't overlap
+     ./HRFAnalyseDirect.py unittest_dataset clean -s 300 --full-file
+
+     Break the file into 5 minute blocks where the blocks start with a one
+      minute diference
+    ./HRFAnalyseDirect.py unittest_dataset clean -s 300 -g 60 --full-file
+
+
 
   =>Compress
      Compress using the gzip algorithm (maximum compression level will be used)
-     ./HRFAnalyseDirectory.py FOO compress -c gzip
+     ./HRFAnalyseDirectory.py unittest_dataset compress -c gzip
 
      Compress using the bzip2 algorithm with minimum compression(1 in this case):
-     ./HRFAnalyseDirectory.py FOO -c bzip2 --level 1
+     ./HRFAnalyseDirectory.py unittest_dataset -c bzip2 --level 1
+
 
   =>Entropy
      Calcutate the entropy using Aproximate entropy with tolerance 0.2 and matrix 
       dimension 2 (reference values for the analysis of biological data)
-     ./HRFAnalyseDirectory.py FOO entropy apen -t 0.2
+     ./HRFAnalyseDirectory.py unittest_dataset entropy apen -t 0.2
 
 """
 
@@ -173,9 +177,9 @@ import logging
 
 def partition_procedures(inputdir,options):
     if options['start_at_end']:
-        outputdir = "%s_last_%d_%d" %(inputdir,options['partition_start'],options['partition_interval'])
+        outputdir = "%s_last_%d_%d" %(inputdir,options['partition_start'],options['section'])
     else:
-        outputdir = "%s_%d_%d" %(inputdir,options['partition_start'],options['partition_interval'])
+        outputdir = "%s_%d_%d" %(inputdir,options['partition_start'],options['section'])
 
     if not os.path.isdir(outputdir):
         logger.info("Creating %s for partitions"%outputdir)
@@ -230,12 +234,6 @@ if __name__=="__main__":
     tools.entropy.add_parser_options(entropy)
 
 
-
-    #These values come from pyeeg's file i'm not sure what they mean or how they should be used
-
-
-    Fs = 173
-    Band = [2*i+1 for i in range(0, 43)]		## 0.5~85 Hz
 
 
     args = parser.parse_args()

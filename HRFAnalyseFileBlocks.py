@@ -22,7 +22,102 @@ This file is part of HRFAnalyse.
 
 _______________________________________________________________________________
 
-HRFAnalyseFileBlocks is a command line interface to study a file
+HRFAnalyseFileBlocks is an auxiliary command line inteface to apply one of the most common operations
+we used.
+
+This interface takes a file or directory, breaks each file into blocks and compresses each of the generated blocks directories.
+
+
+Usage: ./HRFAnalyseFileBlocks.py [BLOCK OPTIONS] INPUTFILE COMMAND [COMMAND OPTIONS]
+
+To define how to create the blocks you can change BLOCK OPTIONS:
+
+  --start-at-end        Partition from end of file instead of beginning
+  -ds SECONDS, --defered-start SECONDS
+                        Time gap between the start of the file and the start
+                        of the interval; default:[0]
+  -s SECONDS, --section SECONDS
+                        Amount of time in seconds to be captured
+  -g SECONDS, --gap SECONDS
+                        gap between sections (if using --full-file option)
+  --use-lines           Partition using line count instead of time
+
+There are two command available compress and entropy.
+
+compress: This command allows you to compress all the files in the
+     given directory.  The list of available compressors is
+     dynamically generated based on their availabillity in the system,
+     below is the full list of all implemented compression algorithms.
+     Unless changed the compression level used is always the max for
+     the chosen algorithm (refer to the compressor's manual for this
+     information).
+     
+
+     OUTCOME: Calling this commmand will create a csv file using ';'
+     as a field delimiter for each file in the _blocks directory.
+     The compression algorith and the compression level used are used
+     to name the resulting file. This file will be created in the
+     parent of the directory we are
+     working with. Each file is represented by a row with three
+     columns, the number of the block, it's original size and it's
+     compressed size.
+
+     COMMAND_OPTIONS for this command are:
+     -c COMPRESSOR, --compressor COMPRESSOR
+                        compression compressor to be used, available
+                        compressors:paq8l, lzma, gzip, zip, bzip2, ppmd,
+                        zlib, spbio;default:[paq8l]
+     --level LEVEL      compression level to be used, this variable is
+                        compressor dependent; default:[The maximum of wathever
+                        compressor was chosen]
+     --decompression    Use this option if you also wish to calculate how long it takes to decompress the file once it's compressed
+
+
+entropy: This command allows you to calculate the entropy for all
+     files in a given directory.
+    
+     OUTCOME: Calling this commmand will create a csv file using ';'
+     as a field delimiter. The entropy measure and the
+     optons used are appended to name the resulting file. This
+     file will be created in the parent of the directory we are
+     working with. Each file is represented by a row with two columns,
+     the number of the block and it's entropy.
+
+
+    COMMAND_OPTIONS are the available entropy measures:
+
+     sampen              Sample Entropy
+     apen                Aproximate Entropy
+     apenv2              A slightly different implementation of Aproximate Entropy
+
+    For a particular function's documentation please look at:
+             pyeeg (http://code.google.com/p/pyeeg/downloads/list)
+
+Examples:
+
+
+=>Compress
+
+Cut files into 5min blocks with no overlap and compress each one with the default compressor
+
+./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 compress
+
+
+Cut files into blocks with 300 lines with no overlap and compress each one with the default compressor
+
+./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 --use-lines compress
+
+
+Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Compress each one with the paq8l compressor
+
+./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 -g 60 compress -c paq8l
+
+
+=>Entropy
+
+Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Calculte each files entropy using the Sample entropy.
+
+./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 -g 60 entropy sampen
 
 
 """

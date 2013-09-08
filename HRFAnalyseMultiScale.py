@@ -220,7 +220,7 @@ if __name__=="__main__":
                                                                 options["tolerance"])
             
             
-            writer=csv.writer(open(outfile,"wb"),delimiter=";")
+            writer=csv.writer(open(outfile,"w"),delimiter=";")
             header = ["Filename"]+[ "Escala%d Entropy"%s for s in range(options["scale_start"],options["scale_stop"]+1,options["scale_step"])]
             writer.writerow(header)
             for filename in sorted(entropy_table.keys()):

@@ -198,17 +198,24 @@ def partition_procedures(inputdir,options):
 
 
 def clean_procedures(inputdir, options):
-    if not os.path.isdir(inputdir):
-        outputdir = os.path.dirname(inputdir)+"_clean"
-    else:
-        outputdir = inputdir+"_clean"
-    if not os.path.isdir(outputdir):
-        logger.info("Creating clean directory %s"%outputdir)
-        os.makedirs(outputdir)
     logger.info("Starting clean procedures")
     if options['keep_time'] or options['section']:
+        if not os.path.isdir(inputdir):
+            outputdir = os.path.dirname(inputdir)+"_clean_wtime"
+        else:
+            outputdir = inputdir+"_clean_wtime"
+        if not os.path.isdir(outputdir):
+            logger.info("Creating partition directory %s"%outputdir)
+            os.makedirs(outputdir)
         tools.clean.clean(inputdir,outputdir,keep_time=True,apply_limits=options['apply_limits'])
     else:
+        if not os.path.isdir(inputdir):
+            outputdir = os.path.dirname(inputdir)+"_clean"
+        else:
+            outputdir = inputdir+"_clean"
+        if not os.path.isdir(outputdir):
+            logger.info("Creating clean directory %s"%outputdir)
+            os.makedirs(outputdir)
         tools.clean.clean(inputdir,outputdir,apply_limits=options['apply_limits'])
     logger.info("Finished clean procedures")
     return outputdir

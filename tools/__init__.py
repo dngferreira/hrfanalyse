@@ -29,6 +29,8 @@ distance -- Calculate the distance between two files
 
 entropy -- Application of pyeeg and other tool to data to determine entropy
 
+multiscale -- construction and calls for multiscale.
+
 partition -- File partition -- partition a file in blocks or cut of a chunk of the file using either minutes or lines.
 
 pyeeg -- an entropy library made available by Forrest S. Bao, Xin Liu and Christina Zhang, "PyEEG: An Open Source Python Module for EEG/MEG Feature Extraction," Computational Intelligence and Neuroscience, March, 2011 
@@ -36,5 +38,4 @@ pyeeg -- an entropy library made available by Forrest S. Bao, Xin Liu and Christ
 separate_blocks -- Using some metric define upper and lower limits and
 mark block that are above upper limits or below lower limits.
 
-memoize -- a helper class to memoize function return values
 """

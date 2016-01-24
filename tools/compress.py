@@ -269,7 +269,7 @@ def spbio_compress(inputfile, level, decompress):
     original_size = int(os.stat(inputfile).st_size)
     compressed_size = int(os.stat(inputfile + '.sph').st_size)
     os.remove(inputfile + '.sph')
-    return (original_size, compressed_size)
+    return original_size, compressed_size
 
 
 # AUXILIARY FUNCTIONS

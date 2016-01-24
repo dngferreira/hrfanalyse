@@ -14,7 +14,8 @@ if __name__ == "__main__":
                         help='directory whose distance matrix will be calculated')
 
     subparsers = parser.add_subparsers(
-            help='Diferent distance definition that can be used with compression and/or entropy (.denotes the concatenation of two files)',
+            help='Diferent distance definition that can be used with compression and/or entropy ' +
+                 '(.denotes the concatenation of two files)',
             dest="distance")
 
     tools.distance.add_parser_options(subparsers)

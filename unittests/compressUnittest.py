@@ -16,7 +16,8 @@ class TestCompressModule(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not os.path.exists('unittest_dataset_clean'): os.mkdir('unittest_dataset_clean')
+        if not os.path.exists('unittest_dataset_clean'):
+            os.mkdir('unittest_dataset_clean')
         tools.clean.clean('unittest_dataset/adulterado.txt', 'unittest_dataset_clean', apply_limits=True)
 
     @classmethod

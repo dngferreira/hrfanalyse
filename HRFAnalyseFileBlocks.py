@@ -25,7 +25,8 @@ _______________________________________________________________________________
 HRFAnalyseFileBlocks is an auxiliary command line inteface to apply one of the most common operations
 we used.
 
-This interface takes a file or directory, breaks each file into blocks and compresses each of the generated blocks directories.
+This interface takes a file or directory, breaks each file into blocks and compresses each of the
+generated blocks directories.
 
 
 Usage: ./HRFAnalyseFileBlocks.py [BLOCK OPTIONS] INPUTFILE COMMAND [COMMAND OPTIONS]
@@ -70,7 +71,8 @@ compress: This command allows you to compress all the files in the
      --level LEVEL      compression level to be used, this variable is
                         compressor dependent; default:[The maximum of wathever
                         compressor was chosen]
-     --decompression    Use this option if you also wish to calculate how long it takes to decompress the file once it's compressed
+     --decompression    Use this option if you also wish to calculate how long it takes to
+                        decompress the file once it's compressed
 
 
 entropy: This command allows you to calculate the entropy for all
@@ -108,14 +110,16 @@ Cut files into blocks with 300 lines with no overlap and compress each one with 
 ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 --use-lines compress
 
 
-Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Compress each one with the paq8l compressor
+Cut files into blocks with 5 min where one block starts 1 min later then the previous one did.
+Compress each one with the paq8l compressor
 
 ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 -g 60 compress -c paq8l
 
 
 =>Entropy
 
-Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Calculte each files entropy using the Sample entropy.
+Cut files into blocks with 5 min where one block starts 1 min later then the previous one did.
+Calculte each files entropy using the Sample entropy.
 
 ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 -g 60 entropy sampen
 
@@ -156,7 +160,7 @@ if __name__ == "__main__":
     logger = logging.getLogger('hrfanalyse')
     logger.setLevel(getattr(logging, options['log_level']))
 
-    if options['log_file'] == None:
+    if options['log_file'] is None:
         log_output = logging.StreamHandler()
     else:
         log_output = logging.FileHandler(options['log_file'])

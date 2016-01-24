@@ -100,9 +100,9 @@ def apply_metric_file(compressed_blocks, block_times, metric):
     limit. The marked blocks are written to a .csv file.
     """
     compression_sizes = [compressed_blocks[fileblock].compressed for fileblock in compressed_blocks]
-    if (metric == 'mean_std'):
+    if metric == 'mean_std':
         lower_lim, upper_lim = mean_std(compression_sizes)
-    elif (metric == 'outliers'):
+    elif metric == 'outliers':
         lower_lim, upper_lim = outliers(compression_sizes)
     below_lower = {}
     above_upper = {}

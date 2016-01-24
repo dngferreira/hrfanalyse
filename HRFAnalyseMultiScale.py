@@ -65,7 +65,8 @@ compress: This command allows you to compress all the files in the
      --level LEVEL      compression level to be used, this variable is
                         compressor dependent; default:[The maximum of wathever
                         compressor was chosen]
-     --decompression    Use this option if you also wish to calculate how long it takes to decompress the file once it's compressed
+     --decompression    Use this option if you also wish to calculate how long it
+                        takes to decompress the file once it's compressed
 
 
 entropy: This command allows you to calculate the entropy for all
@@ -147,7 +148,7 @@ if __name__ == "__main__":
     logger = logging.getLogger('hrfanalyse')
     logger.setLevel(getattr(logging, options['log_level']))
 
-    if options['log_file'] == None:
+    if options['log_file'] is None:
         log_output = logging.StreamHandler()
     else:
         log_output = logging.FileHandler(options['log_file'])

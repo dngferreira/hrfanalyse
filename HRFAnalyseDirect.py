@@ -175,24 +175,25 @@ import tools.entropy
 import csv
 import logging
 
-def partition_procedures(inputdir,options):
+
+def partition_procedures(inputdir, options):
     if options['start_at_end']:
-        outputdir = "%s_last_%d_%d" %(inputdir,options['partition_start'],options['section'])
+        outputdir = "%s_last_%d_%d" % (inputdir, options['partition_start'], options['section'])
     else:
-        outputdir = "%s_%d_%d" %(inputdir,options['partition_start'],options['section'])
+        outputdir = "%s_%d_%d" % (inputdir, options['partition_start'], options['section'])
 
     if not os.path.isdir(outputdir):
-        logger.info("Creating %s for partitions"%outputdir)
+        logger.info("Creating %s for partitions" % outputdir)
         os.makedirs(outputdir)
     logger.info("Starting partition")
     tools.partition.partition(inputdir,
-                                outputdir,
-                                options['partition_start'],
-                                options['section'],
-                                options['gap'],
-                                options['start_at_end'],
-                                options['full_file'],
-                                options['using_lines'])
+                              outputdir,
+                              options['partition_start'],
+                              options['section'],
+                              options['gap'],
+                              options['start_at_end'],
+                              options['full_file'],
+                              options['using_lines'])
     logger.info("Finished partitioning")
     return outputdir
 
@@ -201,32 +202,35 @@ def clean_procedures(inputdir, options):
     logger.info("Starting clean procedures")
     if options['keep_time'] or options['section']:
         if not os.path.isdir(inputdir):
-            outputdir = os.path.dirname(inputdir)+"_clean_wtime"
+            outputdir = os.path.dirname(inputdir) + "_clean_wtime"
         else:
-            outputdir = inputdir+"_clean_wtime"
+            outputdir = inputdir + "_clean_wtime"
         if not os.path.isdir(outputdir):
-            logger.info("Creating partition directory %s"%outputdir)
+            logger.info("Creating partition directory %s" % outputdir)
             os.makedirs(outputdir)
-        tools.clean.clean(inputdir,outputdir,keep_time=True,apply_limits=options['apply_limits'])
+        tools.clean.clean(inputdir, outputdir, keep_time=True, apply_limits=options['apply_limits'])
     else:
         if not os.path.isdir(inputdir):
-            outputdir = os.path.dirname(inputdir)+"_clean"
+            outputdir = os.path.dirname(inputdir) + "_clean"
         else:
-            outputdir = inputdir+"_clean"
+            outputdir = inputdir + "_clean"
         if not os.path.isdir(outputdir):
-            logger.info("Creating clean directory %s"%outputdir)
+            logger.info("Creating clean directory %s" % outputdir)
             os.makedirs(outputdir)
-        tools.clean.clean(inputdir,outputdir,apply_limits=options['apply_limits'])
+        tools.clean.clean(inputdir, outputdir, apply_limits=options['apply_limits'])
     logger.info("Finished clean procedures")
     return outputdir
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Generates a table of file compression/entrop for a given directory")
-    parser.add_argument("inputdir",metavar="INPUT DIRECTORY",help="Directory or case file to be used as input",action="store")
-    parser.add_argument("--log",action="store",metavar="LOGFILE",default=None,dest="log_file",help="Use LOGFILE to save logs.")
-    parser.add_argument("--log-level",dest="log_level",action="store",help="Set Log Level; default:[%(default)s]",choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"],default="WARNING")
+    parser.add_argument("inputdir", metavar="INPUT DIRECTORY", help="Directory or case file to be used as input",
+                        action="store")
+    parser.add_argument("--log", action="store", metavar="LOGFILE", default=None, dest="log_file",
+                        help="Use LOGFILE to save logs.")
+    parser.add_argument("--log-level", dest="log_level", action="store", help="Set Log Level; default:[%(default)s]",
+                        choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"], default="WARNING")
 
     subparsers = parser.add_subparsers(help='Diferent commands to be run on directory', dest="command")
 
@@ -240,21 +244,17 @@ if __name__=="__main__":
     entropy = subparsers.add_parser('entropy', help='calculate entropy for all the files in the given directory')
     tools.entropy.add_parser_options(entropy)
 
-
-
-
     args = parser.parse_args()
     options = vars(args)
 
-
     logger = logging.getLogger('hrfanalyse')
-    logger.setLevel(getattr(logging,options['log_level']))
+    logger.setLevel(getattr(logging, options['log_level']))
 
-    if(options['log_file']==None):
+    if options['log_file'] == None:
         log_output = logging.StreamHandler()
     else:
         log_output = logging.FileHandler(options['log_file'])
-    log_output.setLevel(getattr(logging,options['log_level']))
+    log_output.setLevel(getattr(logging, options['log_level']))
     formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
     log_output.setFormatter(formatter)
     logger.addHandler(log_output)
@@ -264,52 +264,49 @@ if __name__=="__main__":
     if inputdir.endswith('/'):
         inputdir = inputdir[:-1]
 
-    if options['command']=='clean':
-        outputdir = clean_procedures(inputdir,options)
+    if options['command'] == 'clean':
+        outputdir = clean_procedures(inputdir, options)
         if options['section']:
-            outputdir = partition_procedures(outputdir,options)
+            outputdir = partition_procedures(outputdir, options)
         inputdir = outputdir
 
     if not os.path.isdir(inputdir):
-        output_name = "%s_%s"%(os.path.split(inputdir)[0],os.path.basename(inputdir))
+        output_name = "%s_%s" % (os.path.split(inputdir)[0], os.path.basename(inputdir))
     else:
         output_name = inputdir
 
-    if options['command']=='compress':
-        compressor= options['compressor']
-        level=tools.compress.set_level(options)
-        resulting_dict = tools.compress.compress(inputdir,compressor,level,options['decompress'])
+    if options['command'] == 'compress':
+        compressor = options['compressor']
+        level = tools.compress.set_level(options)
+        resulting_dict = tools.compress.compress(inputdir, compressor, level, options['decompress'])
         if options['decompress']:
-            outfile = "%s_decompress_%s_%d.csv"%(output_name,compressor,level)
+            outfile = "%s_decompress_%s_%d.csv" % (output_name, compressor, level)
         else:
-            outfile = "%s_%s_%d.csv"%(output_name,compressor,level)
-        writer = csv.writer(open(outfile,"w"),delimiter=";")
-        header = ["Filename","Original Size","Compressed Size"]
+            outfile = "%s_%s_%d.csv" % (output_name, compressor, level)
+        writer = csv.writer(open(outfile, "w"), delimiter=";")
+        header = ["Filename", "Original Size", "Compressed Size"]
         if options['decompress']:
             header.append("Decompression Time")
         writer.writerow(header)
         for filename in sorted(resulting_dict.keys()):
             cd = resulting_dict[filename]
-            data_row = [filename,cd.original,cd.compressed]
+            data_row = [filename, cd.original, cd.compressed]
             if options['decompress']:
                 data_row.append(cd.time)
             writer.writerow(data_row)
-        
-    elif options['command']=='entropy':
+
+    elif options['command'] == 'entropy':
         files_stds = tools.entropy.calculate_std(inputdir)
-        tolerances = dict((filename,files_stds[filename]*options["tolerance"]) for filename in files_stds)
-        resulting_dict = tools.entropy.entropy(inputdir, 
+        tolerances = dict((filename, files_stds[filename] * options["tolerance"]) for filename in files_stds)
+        resulting_dict = tools.entropy.entropy(inputdir,
                                                options['entropy'],
                                                options['dimension'],
                                                tolerances)
-        
-        outfile= "%s_%s_%d_%f.csv" %(output_name, options['entropy'], options['dimension'], options['tolerance'])
-        
-        writer = csv.writer(open(outfile,"w"),delimiter=";")
-        writer.writerow(["Filename","Entropy"])
+
+        outfile = "%s_%s_%d_%f.csv" % (output_name, options['entropy'], options['dimension'], options['tolerance'])
+
+        writer = csv.writer(open(outfile, "w"), delimiter=";")
+        writer.writerow(["Filename", "Entropy"])
         for filename in sorted(resulting_dict.keys()):
             entropyData = resulting_dict[filename]
-            writer.writerow([filename,entropyData.entropy])        
-
-
-
+            writer.writerow([filename, entropyData.entropy])

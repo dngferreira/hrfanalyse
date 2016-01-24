@@ -37,14 +37,14 @@ ENTRY POINT: distance(filename1, filename2, distance_definition, compressor,
 level, decompress):
 """
 
-
 import sys
 import os
 import compress
 import tempfile
 
-#ENTRY POINT FUNCTION
-def distance(filename1,filename2,distance_definition,compressor,level,decompress):
+
+# ENTRY POINT FUNCTION
+def distance(filename1, filename2, distance_definition, compressor, level, decompress):
     """Calculate the distance between two files.
 
     ARGUMENTS: String file name 1, String file name 2, String distance definition
@@ -53,14 +53,14 @@ def distance(filename1,filename2,distance_definition,compressor,level,decompress
 
     RETURN: A float that represents the distance between the two files.
     """
-    method_to_call = getattr(sys.modules[__name__],distance_definition)
-    return method_to_call(filename1,filename2,compressor,level,decompress)
+    method_to_call = getattr(sys.modules[__name__], distance_definition)
+    return method_to_call(filename1, filename2, compressor, level, decompress)
 
 
-#IMPLEMENTATION
+# IMPLEMENTATION
 
-#Normalized Information Distance
-def nid(filename1,filename2,compressor,level,decompress):
+# Normalized Information Distance
+def nid(filename1, filename2, compressor, level, decompress):
     """
     DEFINITION: Use the compressor to calculate respectively c(f1.f2),c(f1) and
     c(f2) and calculate the distance acording to the definition of
@@ -81,32 +81,34 @@ def nid(filename1,filename2,compressor,level,decompress):
     """
     file_total_data = []
     temp_file = tempfile.NamedTemporaryFile(delete=False)
-    with open(filename1,"r") as file1:
+    with open(filename1, "r") as file1:
         file_total_data += file1.readlines()
-    with open(filename2,"r") as file2:
+    with open(filename2, "r") as file2:
         file_total_data += file2.readlines()
     for line in file_total_data:
         temp_file.write(line)
     temp_file.close()
 
-    file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
-    file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
+    file1_cdata = compress.compress(filename1, compressor, level, decompress)[filename1]
+    file2_cdata = compress.compress(filename2, compressor, level, decompress)[filename2]
     temp_file_cdata = compress.compress(temp_file.name,
                                         compressor,
                                         level,
                                         decompress)[temp_file.name]
 
     if decompress:
-        dist = (temp_file_cdata.time - min(file1_cdata.time,file2_cdata.time))/float(max(file1_cdata.time,file2_cdata.time))
+        dist = (temp_file_cdata.time - min(file1_cdata.time, file2_cdata.time)) / float(
+                max(file1_cdata.time, file2_cdata.time))
     else:
-        dist = (temp_file_cdata.compressed - min(file1_cdata.compressed,file2_cdata.compressed))/float(max(file1_cdata.compressed,file2_cdata.compressed))
-        
+        dist = (temp_file_cdata.compressed - min(file1_cdata.compressed, file2_cdata.compressed)) / float(
+                max(file1_cdata.compressed, file2_cdata.compressed))
+
     os.unlink(temp_file.name)
     return dist
 
 
-#Distance 1
-def d1(filename1,filename2,compressor,level,decompress):
+# Distance 1
+def d1(filename1, filename2, compressor, level, decompress):
     """
     Use the compressor to calculate respectively c(f1.f2),c(f1) and
     c(f2) and calculate the distance acording to the definition
@@ -129,28 +131,31 @@ def d1(filename1,filename2,compressor,level,decompress):
     a temporary file. Compression is then calculated for each file
     including the concatenation file, and the formula is applied.
     """
-    
-    file1_file2, file2_file1 = create_concatenated_files(filename1,filename2)
 
-    file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
-    file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
-    file1_file2_cdata = compress.compress(file1_file2.name,compressor,level,decompress)[file1_file2.name]
-    file2_file1_cdata = compress.compress(file2_file1.name,compressor,level,decompress)[file2_file1.name]
+    file1_file2, file2_file1 = create_concatenated_files(filename1, filename2)
+
+    file1_cdata = compress.compress(filename1, compressor, level, decompress)[filename1]
+    file2_cdata = compress.compress(filename2, compressor, level, decompress)[filename2]
+    file1_file2_cdata = compress.compress(file1_file2.name, compressor, level, decompress)[file1_file2.name]
+    file2_file1_cdata = compress.compress(file2_file1.name, compressor, level, decompress)[file2_file1.name]
 
     if decompress:
-    #this float conversion will become unecessary if the code is ever migrated to python3
-        dist = max(file1_file2_cdata.time - file1_cdata.time, file2_file1_cdata.time - file2_cdata.time)/ float(max(file1_cdata.time, file2_cdata.time))
+        # this float conversion will become unecessary if the code is ever migrated to python3
+        dist = max(file1_file2_cdata.time - file1_cdata.time, file2_file1_cdata.time - file2_cdata.time) / float(
+                max(file1_cdata.time, file2_cdata.time))
     else:
-        dist = max(file1_file2_cdata.compressed - file1_cdata.compressed, file2_file1_cdata.compressed - file2_cdata.compressed)/ float(max(file1_cdata.compressed, file2_cdata.compressed))
+        dist = max(file1_file2_cdata.compressed - file1_cdata.compressed,
+                   file2_file1_cdata.compressed - file2_cdata.compressed) / float(
+                max(file1_cdata.compressed, file2_cdata.compressed))
 
-
-#    os.unlink(file1_file2.name)
-#    os.unlink(file2_file1.name)
+    # os.unlink(file1_file2.name)
+    #    os.unlink(file2_file1.name)
 
     return dist
 
-#Distance 2
-def d2(filename1,filename2,compressor,level,decompress):
+
+# Distance 2
+def d2(filename1, filename2, compressor, level, decompress):
     """
     Use the compressor to calculate respectively c(f1.f2),c(f1) and
     c(f2) and calculate the distance acording to the definition
@@ -173,35 +178,37 @@ def d2(filename1,filename2,compressor,level,decompress):
     a temporary file. Compression is then calculated for each file
     including the concatenation file, and the formula is applied.
     """
-    file1_file2, file2_file1 = create_concatenated_files(filename1,filename2)
+    file1_file2, file2_file1 = create_concatenated_files(filename1, filename2)
 
-    file1_cdata = compress.compress(filename1,compressor,level,decompress)[filename1]
-    file2_cdata = compress.compress(filename2,compressor,level,decompress)[filename2]
-    file1_file2_cdata = compress.compress(file1_file2.name,compressor,level,decompress)[file1_file2.name]
-    file2_file1_cdata = compress.compress(file2_file1.name,compressor,level,decompress)[file2_file1.name]
+    file1_cdata = compress.compress(filename1, compressor, level, decompress)[filename1]
+    file2_cdata = compress.compress(filename2, compressor, level, decompress)[filename2]
+    file1_file2_cdata = compress.compress(file1_file2.name, compressor, level, decompress)[file1_file2.name]
+    file2_file1_cdata = compress.compress(file2_file1.name, compressor, level, decompress)[file2_file1.name]
 
     if decompress:
-        dist = (file1_file2_cdata.time - file1_cdata.time + file2_file1_cdata.time - file2_cdata.time) / (1/2.0 * (file1_file2_cdata.time + file2_file1_cdata.time))
+        dist = (file1_file2_cdata.time - file1_cdata.time + file2_file1_cdata.time - file2_cdata.time) / (
+            1 / 2.0 * (file1_file2_cdata.time + file2_file1_cdata.time))
     else:
-        dist = (file1_file2_cdata.compressed - file1_cdata.compressed + file2_file1_cdata.compressed - file2_cdata.compressed) / (1/2.0 * (file1_file2_cdata.compressed + file2_file1_cdata.compressed))
+        dist = (file1_file2_cdata.compressed - file1_cdata.compressed + file2_file1_cdata.compressed -
+                file2_cdata.compressed) / (1 / 2.0 * (file1_file2_cdata.compressed + file2_file1_cdata.compressed))
 
-    
     os.unlink(file1_file2.name)
     os.unlink(file2_file1.name)
 
     return dist
 
-#AUXILIARY FUNCTION
 
-def create_concatenated_files(filename1,filename2):
+# AUXILIARY FUNCTION
+
+def create_concatenated_files(filename1, filename2):
     file1_file2 = tempfile.NamedTemporaryFile(delete=False)
     file2_file1 = tempfile.NamedTemporaryFile(delete=False)
-    with open(filename1,"r") as file1:
-        with open(filename2,"r") as file2:
+    with open(filename1, "r") as file1:
+        with open(filename2, "r") as file2:
             file1_data = file1.readlines()
             file2_data = file2.readlines()
-            file1_file2_data = file1_data+file2_data
-            file2_file1_data = file2_data+file1_data
+            file1_file2_data = file1_data + file2_data
+            file2_file1_data = file2_data + file1_data
     for line in file1_file2_data:
         file1_file2.write(line)
     for line in file2_file1_data:
@@ -209,7 +216,7 @@ def create_concatenated_files(filename1,filename2):
 
     file1_file2.close()
     file2_file1.close()
-    return (file1_file2,file2_file1)
+    return file1_file2, file2_file1
 
 
 def add_parser_options(parser):
@@ -222,14 +229,15 @@ def add_parser_options(parser):
     
     Return:None
     """
-    nid = parser.add_parser('nid',help="Normalized Information Distance Definition( nid(f1,f2) = (c(f1.f2)-min{c(f1),c(f2)})/max{c(f1),c(f2)},)")
-    
-    d1 = parser.add_parser('d1',help="Distance 1 ( d1(f1,f2) = max{c(f1.f2) − c(f1), c(f2.f1) − c(f2)}/ max{c(f1), c(f2)} ) proposed in the article --> http://www.dm.unibo.it/~farinell/paginelink/articolinostri/HRVLZ.pdf")
+    nid = parser.add_parser('nid',
+                            help="Normalized Information Distance Definition( nid(f1,f2) = (c(f1.f2)-min{c(f1),c(f2)})/max{c(f1),c(f2)},)")
 
-    d2 = parser.add_parser('d2',help="Distance 2 ( d2(f1,f2) = c(f1.f2) − c(f1) + c(f2.f1) − c(f2)/( 1/2*(c(f1.f2) + c(f2.f1)))) proposed in the article --> http://www.dm.unibo.it/~farinell/paginelink/articolinostri/HRVLZ.pdf")
+    d1 = parser.add_parser('d1',
+                           help="Distance 1 ( d1(f1,f2) = max{c(f1.f2) − c(f1), c(f2.f1) − c(f2)}/ max{c(f1), c(f2)} ) proposed in the article --> http://www.dm.unibo.it/~farinell/paginelink/articolinostri/HRVLZ.pdf")
 
+    d2 = parser.add_parser('d2',
+                           help="Distance 2 ( d2(f1,f2) = c(f1.f2) − c(f1) + c(f2.f1) − c(f2)/( 1/2*(c(f1.f2) + c(f2.f1)))) proposed in the article --> http://www.dm.unibo.it/~farinell/paginelink/articolinostri/HRVLZ.pdf")
 
     compress.add_parser_options(nid)
     compress.add_parser_options(d1)
     compress.add_parser_options(d2)
-

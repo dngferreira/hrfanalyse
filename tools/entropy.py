@@ -34,19 +34,19 @@ ENTRY POINT: entropy(input_name,function,dimension,tolerances)
 """
 
 import sys
-from tools.pyeeg import samp_entropy,ap_entropy
+from tools.pyeeg import samp_entropy, ap_entropy
 import os
 import numpy
 from collections import namedtuple
 
-#DATA TYPE DEFINITIONS
+# DATA TYPE DEFINITIONS
 """This is a data type defined to be used as a return for entropy; it
 contains the number of points in the file, and the file's entropy"""
-EntropyData = namedtuple('EntropyData','points entropy')
+EntropyData = namedtuple('EntropyData', 'points entropy')
 
 
-#ENTRY POINT FUNCTION
-def entropy(input_name,function,dimension,tolerances):
+# ENTRY POINT FUNCTION
+def entropy(input_name, function, dimension, tolerances):
     """
     (str, str, int, float) -> EntropyData
     
@@ -58,18 +58,19 @@ def entropy(input_name,function,dimension,tolerances):
     and tolerance parameters.
     """
 
-    method_to_call= getattr(sys.modules[__name__],function)
-    entropy_dict={}
+    method_to_call = getattr(sys.modules[__name__], function)
+    entropy_dict = {}
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
-            entropyData = method_to_call(os.path.join(input_name,filename.strip()),dimension,tolerances[filename])
+            entropyData = method_to_call(os.path.join(input_name, filename.strip()), dimension, tolerances[filename])
             entropy_dict[filename.strip()] = entropyData
     else:
-        tolerances=tolerances[list(tolerances.keys())[0]]
-        entropyData = method_to_call(input_name.strip(),dimension,tolerances)
+        tolerances = tolerances[list(tolerances.keys())[0]]
+        entropyData = method_to_call(input_name.strip(), dimension, tolerances)
         entropy_dict[input_name.strip()] = entropyData
     return entropy_dict
+
 
 def calculate_std(input_name):
     """
@@ -83,13 +84,14 @@ def calculate_std(input_name):
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
-            files_std[filename] = calculate_file_std(os.path.join(input_name,filename))
+            files_std[filename] = calculate_file_std(os.path.join(input_name, filename))
     else:
-        files_std[input_name]=calculate_file_std(input_name)
+        files_std[input_name] = calculate_file_std(input_name)
     return files_std
 
-#IMPLEMENTATION
-def apen(filename,dimension,tolerance):
+
+# IMPLEMENTATION
+def apen(filename, dimension, tolerance):
     """
     (str, int, float) -> EntropyData
 
@@ -97,12 +99,13 @@ def apen(filename,dimension,tolerance):
 
     NOTE: Pyeeg implementation    
     """
-    with open(filename,"r") as file_d:
+    with open(filename, "r") as file_d:
         file_data = file_d.readlines()
-    file_data = list(map(float,file_data))
-    return EntropyData(len(file_data),ap_entropy(file_data, dimension, tolerance))
+    file_data = list(map(float, file_data))
+    return EntropyData(len(file_data), ap_entropy(file_data, dimension, tolerance))
 
-def apenv2(filename,dimension,tolerance):
+
+def apenv2(filename, dimension, tolerance):
     """
     (str, int, float) -> EntropyData
     
@@ -160,56 +163,56 @@ def apenv2(filename,dimension,tolerance):
     in a dictionary so the test if a particular column is to jumped is O(1).
     
     """
-    
-    with open(filename,"r") as file_d:
+
+    with open(filename, "r") as file_d:
         file_data = file_d.readlines()
-    file_data = list(map(float,file_data))
+    file_data = list(map(float, file_data))
 
     data_len = len(file_data)
 
-    Nm = [data_len-dimension+1]*(data_len-dimension+1)
-    Nmp = [data_len - dimension]*(data_len - dimension)
-    burned_indexes=[{} for i in range(data_len -dimension+1)]
+    Nm = [data_len - dimension + 1] * (data_len - dimension + 1)
+    Nmp = [data_len - dimension] * (data_len - dimension)
+    burned_indexes = [{} for i in range(data_len - dimension + 1)]
 
-    for i in range(0,data_len-(dimension-1)):
-        if i>0:
-            burned_indexes[i-1]=None
-        for j in range(i+1,data_len-(dimension-1)):
+    for i in range(0, data_len - (dimension - 1)):
+        if i > 0:
+            burned_indexes[i - 1] = None
+        for j in range(i + 1, data_len - (dimension - 1)):
             if j in burned_indexes[i]:
                 continue
-            m=dimension-1
+            m = dimension - 1
             while m >= 0:
-                if abs(file_data[i+m]-file_data[j+m])>tolerance:
-                    mabove=m
-                    while mabove>=0:
-                        if i+mabove<data_len-(dimension-1) and j+mabove<data_len-(dimension-1):
-                            Nm[i+mabove]-=1
-                            Nm[j+mabove]-=1
-                        if i+mabove<data_len-dimension and j+mabove<data_len-dimension:
-                            Nmp[i+mabove]-=1
-                            Nmp[j+mabove]-=1
-                        if i+mabove<data_len-dimension+1 and j+mabove<data_len-dimension+1:
-                            burned_indexes[i+mabove][j+mabove]=None
-                        mabove-=1
+                if abs(file_data[i + m] - file_data[j + m]) > tolerance:
+                    mabove = m
+                    while mabove >= 0:
+                        if i + mabove < data_len - (dimension - 1) and j + mabove < data_len - (dimension - 1):
+                            Nm[i + mabove] -= 1
+                            Nm[j + mabove] -= 1
+                        if i + mabove < data_len - dimension and j + mabove < data_len - dimension:
+                            Nmp[i + mabove] -= 1
+                            Nmp[j + mabove] -= 1
+                        if i + mabove < data_len - dimension + 1 and j + mabove < data_len - dimension + 1:
+                            burned_indexes[i + mabove][j + mabove] = None
+                        mabove -= 1
                     break
-                m-=1
-            if m<0 and i<data_len-dimension and j<data_len-dimension and abs(file_data[i+dimension]-file_data[j+dimension])>tolerance:
-                        Nmp[i]-=1
-                        Nmp[j]-=1
+                m -= 1
+            if m < 0 and i < data_len - dimension and j < data_len - dimension and abs(
+                            file_data[i + dimension] - file_data[j + dimension]) > tolerance:
+                Nmp[i] -= 1
+                Nmp[j] -= 1
 
-    Cm = [line/float(data_len-dimension+1) for line in Nm]
-    Cmp = [line/float(data_len-dimension) for line in Nmp]
+    Cm = [line / float(data_len - dimension + 1) for line in Nm]
+    Cmp = [line / float(data_len - dimension) for line in Nmp]
 
     Phi_m = numpy.mean([numpy.log(pos) for pos in Cm])
     Phi_mp = numpy.mean([numpy.log(pos) for pos in Cmp])
-    
+
     Ap_En = Phi_m - Phi_mp
 
-    return EntropyData(len(file_data),Ap_En)
+    return EntropyData(len(file_data), Ap_En)
 
-        
 
-#def fast_apen(filename,args):
+# def fast_apen(filename,args):
 #    """Try the implementation described in this article 
 #    http://www.sciencedirect.com/science/article/pii/S0169260710002956"""
 #
@@ -223,7 +226,7 @@ def apenv2(filename,dimension,tolerance):
 #    
 #    pointArray.sort()
 
-def sampen(filename,dimension,tolerance):
+def sampen(filename, dimension, tolerance):
     """
     (str, int, float) -> EntropyData
 
@@ -231,10 +234,11 @@ def sampen(filename,dimension,tolerance):
 
     NOTE: Pyeeg implementation    
     """
-    with open(filename,'r') as file_d:
-        file_data= file_d.readlines()
-    file_data=list(map(float,file_data))
-    return EntropyData(len(file_data),samp_entropy(file_data,dimension,tolerance))
+    with open(filename, 'r') as file_d:
+        file_data = file_d.readlines()
+    file_data = list(map(float, file_data))
+    return EntropyData(len(file_data), samp_entropy(file_data, dimension, tolerance))
+
 
 def calculate_file_std(filename):
     """
@@ -243,12 +247,13 @@ def calculate_file_std(filename):
     Function to calculate the standard deviation of the values in a single file.
     
     """
-    with open(filename,"rU") as fdin:
+    with open(filename, "rU") as fdin:
         file_data = fdin.readlines()
-    file_data = list(map(float,file_data))
+    file_data = list(map(float, file_data))
     return numpy.std(file_data)
 
-#AUXILIARY FUNCTIONS
+
+# AUXILIARY FUNCTIONS
 
 def add_parser_options(parser):
     """
@@ -262,13 +267,22 @@ def add_parser_options(parser):
     entropy_parsers = parser.add_subparsers(help='Diferent methods for calculating entropy', dest="entropy")
 
     samp_en = entropy_parsers.add_parser('sampen', help="Sample Entropy")
-    samp_en.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating sample entropy. [default:%(default)s]",default=0.1)
-    samp_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
+    samp_en.add_argument('-t', '--tolerance', dest="tolerance", type=float, action="store", metavar="TOLERANCE",
+                         help="Tolerance level to be used when calculating sample entropy. [default:%(default)s]",
+                         default=0.1)
+    samp_en.add_argument('-d', '--dimension', dest="dimension", type=int, action="store", metavar="MATRIX DIMENSION",
+                         help="Matrix Dimension. [default:%(default)s]", default=2)
 
     ap_en = entropy_parsers.add_parser('apen', help="Aproximate Entropy")
-    ap_en.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",default=0.1)
-    ap_en.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
+    ap_en.add_argument('-t', '--tolerance', dest="tolerance", type=float, action="store", metavar="TOLERANCE",
+                       help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",
+                       default=0.1)
+    ap_en.add_argument('-d', '--dimension', dest="dimension", type=int, action="store", metavar="MATRIX DIMENSION",
+                       help="Matrix Dimension. [default:%(default)s]", default=2)
 
     ap_en_v2 = entropy_parsers.add_parser('apenv2', help="Aproximate Entropy version 2")
-    ap_en_v2.add_argument('-t','--tolerance',dest="tolerance",type=float,action="store",metavar="TOLERANCE",help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",default=0.1)
-    ap_en_v2.add_argument('-d','--dimension',dest="dimension",type=int,action="store",metavar="MATRIX DIMENSION",help="Matrix Dimension. [default:%(default)s]",default=2)
+    ap_en_v2.add_argument('-t', '--tolerance', dest="tolerance", type=float, action="store", metavar="TOLERANCE",
+                          help="Tolerance level to be used when calculating aproximate entropy. [default:%(default)s]",
+                          default=0.1)
+    ap_en_v2.add_argument('-d', '--dimension', dest="dimension", type=int, action="store", metavar="MATRIX DIMENSION",
+                          help="Matrix Dimension. [default:%(default)s]", default=2)

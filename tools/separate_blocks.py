@@ -43,11 +43,12 @@ import numpy
 import csv
 import logging
 
-module_logger =logging.getLogger('hrfanalyse.separate_blocks')
+module_logger = logging.getLogger('hrfanalyse.separate_blocks')
 
-#ENTRY POINT FUNCTION
 
-def apply_metric(compressed_files,block_times,metric):
+# ENTRY POINT FUNCTION
+
+def apply_metric(compressed_files, block_times, metric):
     """
     Apply the metric chosen to separate the blocks in all the files in
     compressed files.
@@ -61,24 +62,24 @@ def apply_metric(compressed_files,block_times,metric):
     file's below_lower or above_upper dictionaries as values.
 
     """
-    below_lower={}
-    above_upper={}
-    #A sigle file
-    if len(compressed_files.keys())==1:
-        blocks_below,blocks_above = apply_metric_file(compressed_files.values()[0],block_times.values()[0],metric)
-        below_lower[compressed_files.keys()[0]]=blocks_below
-        above_upper[compressed_files.keys()[0]]=blocks_above
+    below_lower = {}
+    above_upper = {}
+    # A sigle file
+    if len(compressed_files.keys()) == 1:
+        blocks_below, blocks_above = apply_metric_file(compressed_files.values()[0], block_times.values()[0], metric)
+        below_lower[compressed_files.keys()[0]] = blocks_below
+        above_upper[compressed_files.keys()[0]] = blocks_above
     else:
         for filename in compressed_files:
-            blocks_below,blocks_above = apply_metric_file(compressed_files[filename],block_times[filename],metric)
-            below_lower[filename]=blocks_below
-            above_upper[filename]=blocks_above
-    return below_lower,above_upper
+            blocks_below, blocks_above = apply_metric_file(compressed_files[filename], block_times[filename], metric)
+            below_lower[filename] = blocks_below
+            above_upper[filename] = blocks_above
+    return below_lower, above_upper
 
 
-#IMPLEMENTATION
+# IMPLEMENTATION
 
-def apply_metric_file(compressed_blocks,block_times,metric):
+def apply_metric_file(compressed_blocks, block_times, metric):
     """
     Apply the metric chosen to the data of a single file to determine
     the upper and lower limits, and mark blocks that are either above
@@ -99,24 +100,24 @@ def apply_metric_file(compressed_blocks,block_times,metric):
     limit. The marked blocks are written to a .csv file.
     """
     compression_sizes = [compressed_blocks[fileblock].compressed for fileblock in compressed_blocks]
-    if(metric=='mean_std'):
-        lower_lim,upper_lim = mean_std(compression_sizes)
-    elif(metric=='outliers'):
-        lower_lim,upper_lim = outliers(compression_sizes)
+    if (metric == 'mean_std'):
+        lower_lim, upper_lim = mean_std(compression_sizes)
+    elif (metric == 'outliers'):
+        lower_lim, upper_lim = outliers(compression_sizes)
     below_lower = {}
     above_upper = {}
-    
+
     for fileblock in compressed_blocks:
-        #fileblock is alway something like filename_blocknum
+        # fileblock is alway something like filename_blocknum
         block = int(fileblock.split('_')[-1])
-        start_second=round(block_times[block-1][0],2)
-        end_second=round(block_times[block-1][1],2)
-        if(compressed_blocks[fileblock][1]<lower_lim):
-            below_lower[block] = (start_second,end_second)
-        elif(compressed_blocks[fileblock][1]>upper_lim):
-            above_upper[block] = (start_second,end_second)
-            
-    return (below_lower,above_upper)
+        start_second = round(block_times[block - 1][0], 2)
+        end_second = round(block_times[block - 1][1], 2)
+        if compressed_blocks[fileblock][1] < lower_lim:
+            below_lower[block] = (start_second, end_second)
+        elif compressed_blocks[fileblock][1] > upper_lim:
+            above_upper[block] = (start_second, end_second)
+
+    return below_lower, above_upper
 
 
 def mean_std(compressed_sizes):
@@ -130,13 +131,14 @@ def mean_std(compressed_sizes):
     Lower limit is defined as mean - standard deviation
     Upper limit is defined as mean + standard deviation 
     """
-    mean_size = numpy.mean(compressed_sizes) 
+    mean_size = numpy.mean(compressed_sizes)
     std_size = numpy.std(compressed_sizes)
     upper_lim = mean_size + std_size
     lower_lim = mean_size - std_size
 
-    return (lower_lim,upper_lim)
-    
+    return lower_lim, upper_lim
+
+
 def outliers(compressed_sizes):
     """
     Defines the limits based on the definition of outliers.
@@ -152,36 +154,34 @@ def outliers(compressed_sizes):
     Inter Percentil Ratio = Percentil(75)-Percentil(25)
     """
     ordered_sizes = sorted(compressed_sizes)
-    p25_index = len(ordered_sizes)*25/100.0+0.5
-    p75_index = len(ordered_sizes)*75/100.0+0.5
-    p50_index = len(ordered_sizes)*50/100.0+0.5
-    
+    p25_index = len(ordered_sizes) * 25 / 100.0 + 0.5
+    p75_index = len(ordered_sizes) * 75 / 100.0 + 0.5
+    p50_index = len(ordered_sizes) * 50 / 100.0 + 0.5
 
-    if(p25_index%1!=0):
-        p25 = (ordered_sizes[int(p25_index)-1]+ordered_sizes[int(p25_index)])/2
+    if p25_index % 1 != 0:
+        p25 = (ordered_sizes[int(p25_index) - 1] + ordered_sizes[int(p25_index)]) / 2
     else:
-        p25 = ordered_sizes[int(p25_index)-1]
+        p25 = ordered_sizes[int(p25_index) - 1]
 
-    if(p75_index%1!=0):
-        p75 = (ordered_sizes[int(p75_index)-1]+ordered_sizes[int(p75_index)])/2
+    if p75_index % 1 != 0:
+        p75 = (ordered_sizes[int(p75_index) - 1] + ordered_sizes[int(p75_index)]) / 2
     else:
-        p75 = ordered_sizes[int(p75_index)-1]
+        p75 = ordered_sizes[int(p75_index) - 1]
 
-    if(p50_index%1!=0):
-        p50 = (ordered_sizes[int(p50_index)-1]+ordered_sizes[int(p50_index)])/2
+    if p50_index % 1 != 0:
+        p50 = (ordered_sizes[int(p50_index) - 1] + ordered_sizes[int(p50_index)]) / 2
     else:
-        p50 = ordered_sizes[int(p50_index)-1]
-    
-    ipr = p75-p25
-    
+        p50 = ordered_sizes[int(p50_index) - 1]
 
-    lower_lim = p50-1.5*ipr
-    upper_lim = p50+1.5*ipr
+    ipr = p75 - p25
 
-    return (lower_lim,upper_lim)
+    lower_lim = p50 - 1.5 * ipr
+    upper_lim = p50 + 1.5 * ipr
+
+    return lower_lim, upper_lim
 
 
-#AUXILIARY FUNCTIONS
+# AUXILIARY FUNCTIONS
 
 def add_parser_options(parser):
     """
@@ -192,5 +192,7 @@ def add_parser_options(parser):
     Arguments: The parser to which you want the arguments added to.
     
     Return:None
-    """    
-    parser.add_argument("-l", "--limits", dest="limits",metavar="METRIC",action="store", help="Metric used to define the upper and lower limits when separating blocks: mean_std (mean +/- standard deviation), outliers (P50+/-1.5*IPR) [default: %(default)s]",choices=["mean_std","outliers"],default="mean_std")
+    """
+    parser.add_argument("-l", "--limits", dest="limits", metavar="METRIC", action="store",
+                        help="Metric used to define the upper and lower limits when separating blocks: mean_std (mean +/- standard deviation), outliers (P50+/-1.5*IPR) [default: %(default)s]",
+                        choices=["mean_std", "outliers"], default="mean_std")

@@ -3,6 +3,7 @@ import unittest
 import os
 import shutil
 
+
 class TestCleanModule(unittest.TestCase):
     """Test functions in clean module"""
 
@@ -15,13 +16,14 @@ class TestCleanModule(unittest.TestCase):
     """
         if not os.path.exists('unittest_dataset_clean'):
             os.mkdir('unittest_dataset_clean')
-        tools.clean.clean('unittest_dataset','unittest_dataset_clean')
-        self.assertEqual(os.listdir('unittest_dataset'),os.listdir('unittest_dataset_clean'))
+        tools.clean.clean('unittest_dataset', 'unittest_dataset_clean')
+        self.assertEqual(os.listdir('unittest_dataset'), os.listdir('unittest_dataset_clean'))
         for filename in os.listdir('unittest_dataset'):
-            fdclean = open(os.path.join('unittest_dataset_clean',filename),'rU')
+            fdclean = open(os.path.join('unittest_dataset_clean', filename), 'rU')
             first = fdclean.readline()
-            self.assertEqual(len(first.split()),1)
-        shutil.rmdir('unittest_dataset_clean)        
+            self.assertEqual(len(first.split()), 1)
+            fdclean.close()
+        shutil.rmtree('unittest_dataset_clean')
 
     def test_dir_nolimit_kt(self):
         """
@@ -32,13 +34,14 @@ class TestCleanModule(unittest.TestCase):
     """
         if not os.path.exists('unittest_dataset_clean'):
             os.mkdir('unittest_dataset_clean')
-        tools.clean.clean('unittest_dataset','unittest_dataset_clean',keep_time=True)
-        self.assertEqual(os.listdir('unittest_dataset'),os.listdir('unittest_dataset_clean'))
+        tools.clean.clean('unittest_dataset', 'unittest_dataset_clean', keep_time=True)
+        self.assertEqual(os.listdir('unittest_dataset'), os.listdir('unittest_dataset_clean'))
         for filename in os.listdir('unittest_dataset'):
-            fdclean = open(os.path.join('unittest_dataset_clean',filename),'rU')
+            fdclean = open(os.path.join('unittest_dataset_clean', filename), 'rU')
             first = fdclean.readline()
-            self.assertEqual(len(first.split()),2)
-        shutil.rmdir('unittest_dataset_clean)
+            self.assertEqual(len(first.split()), 2)
+            fdclean.close()
+        shutil.rmtree('unittest_dataset_clean')
 
     def test_dir_limit_nokt(self):
         """
@@ -51,13 +54,15 @@ class TestCleanModule(unittest.TestCase):
     """
         if not os.path.exists('unittest_dataset_clean'):
             os.mkdir('unittest_dataset_clean')
-        tools.clean.clean('unittest_dataset','unittest_dataset_clean',False,apply_limits=True)
-        self.assertEqual(os.listdir('unittest_dataset'),os.listdir('unittest_dataset_clean'))
+        tools.clean.clean('unittest_dataset', 'unittest_dataset_clean', False, apply_limits=True)
+        self.assertEqual(os.listdir('unittest_dataset'), os.listdir('unittest_dataset_clean'))
         fdorig = open('unittest_dataset/adulterado.txt')
         fdclean = open('unittest_dataset_clean/adulterado.txt')
-        self.assertEqual(len(fdorig.readlines())-2,len(fdclean.readlines()))
-        shutil.rmdir('unittest_dataset_clean)
+        self.assertEqual(len(fdorig.readlines()) - 2, len(fdclean.readlines()))
+        fdorig.close()
+        fdclean.close()
+        shutil.rmtree('unittest_dataset_clean')
 
-        
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main(exit=False)

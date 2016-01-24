@@ -40,11 +40,12 @@ apply_limits=False)
 import os
 import logging
 
-module_logger=logging.getLogger('hrfanalyse.clean')
+module_logger = logging.getLogger('hrfanalyse.clean')
 
-#ENTRY POINT FUNCTIONS
 
-def clean(input_name,dest_dir,keep_time=False, apply_limits=False):
+# ENTRY POINT FUNCTIONS
+
+def clean(input_name, dest_dir, keep_time=False, apply_limits=False):
     """
     (str,str,bool,bool,bool) -> Nonetype
 
@@ -53,24 +54,25 @@ def clean(input_name,dest_dir,keep_time=False, apply_limits=False):
     time stamp is kept and the limits(50-250) are applied.
 
     """
-    module_logger.debug("The input name received: %s"%input_name)
+    module_logger.debug("The input name received: %s" % input_name)
     if os.path.isdir(input_name):
         filelist = os.listdir(input_name)
         for filename in filelist:
-            clean_file( os.path.join(input_name,filename.strip()), 
-                        os.path.join(dest_dir,filename.strip()), 
-                        keep_time, 
-                        apply_limits)
+            clean_file(os.path.join(input_name, filename.strip()),
+                       os.path.join(dest_dir, filename.strip()),
+                       keep_time,
+                       apply_limits)
     else:
-        filename= os.path.basename(input_name)
-        clean_file( input_name, 
-                    os.path.join(dest_dir,filename.strip()), 
-                    keep_time,
-                    apply_limits)
+        filename = os.path.basename(input_name)
+        clean_file(input_name,
+                   os.path.join(dest_dir, filename.strip()),
+                   keep_time,
+                   apply_limits)
 
-#IMPLEMENTATION
 
-def clean_file(inputfile, dest_file , keep_time, apply_limits):
+# IMPLEMENTATION
+
+def clean_file(inputfile, dest_file, keep_time, apply_limits):
     """
 
     (str, str, bool, bool) -> NoneType
@@ -78,34 +80,34 @@ def clean_file(inputfile, dest_file , keep_time, apply_limits):
     Clean operation of a single file.
     
     """
-    with open(inputfile,"rU") as fdin:
-        with open(dest_file,"w") as fdout:
+    with open(inputfile, "rU") as fdin:
+        with open(dest_file, "w") as fdout:
             for line in fdin:
-                data =  line.split()
-                
-                #to clean any headers the file might have, this operates under the assumtion
-                #headers never start with a number.
+                data = line.split()
+
+                # to clean any headers the file might have, this operates under the assumtion
+                # headers never start with a number.
                 try:
                     float(data[0])
                 except ValueError:
                     continue
-                if len(data)!=0:
+                if len(data) != 0:
                     hrf = float(data[1])
-                    if(hrf >= 1000):
-                        hrf = round(float(data[1])/1000)
+                    if hrf >= 1000:
+                        hrf = round(float(data[1]) / 1000)
                     if not apply_limits:
                         if keep_time:
                             time = data[0]
-                            fdout.write("%s "%time)
-                        fdout.write("%.3f\n"%hrf)    
-                    elif hrf>= 50 and hrf<=250:
+                            fdout.write("%s " % time)
+                        fdout.write("%.3f\n" % hrf)
+                    elif 50 <= hrf <= 250:
                         if keep_time:
                             time = data[0]
-                            fdout.write("%s "%time)
-                        fdout.write("%.3f\n"%hrf)
+                            fdout.write("%s " % time)
+                        fdout.write("%.3f\n" % hrf)
 
 
-#AUXILIARY FUNCTIONS
+# AUXILIARY FUNCTIONS
 
 def add_parser_options(parser):
     """
@@ -123,10 +125,8 @@ def add_parser_options(parser):
                         action="store_true",
                         default=False,
                         help="When cleaning keep both the hrf and time stamp")
-    parser.add_argument("--apply-limits", 
-                        dest="apply_limits", 
-                        action="store_true", 
+    parser.add_argument("--apply-limits",
+                        dest="apply_limits",
+                        action="store_true",
                         default=False,
                         help="When cleaning apply limit cutoffs")
-
-

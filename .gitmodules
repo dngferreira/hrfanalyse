@@ -1,0 +1,3 @@
+[submodule "algo/brotli"]
+	path = algo/brotli
+	url = https://github.com/google/brotli

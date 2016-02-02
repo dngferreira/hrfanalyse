@@ -81,7 +81,7 @@ def compress(input_name, compression_algorithm, level, decompress=False):
     (str,str,int,bool)-> dict of str : CompressionData
 
     Given a file or directory named input_name, apply the desired
-    compression algorithm to all the files. Optionaly a timming on 
+    compression algorithm to all the files. Optionaly a timming on
     decompression may also be run.
 
     Levels will be set to the compressor's maximum or minimum respectively

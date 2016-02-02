@@ -78,24 +78,24 @@ automatically.
 
 * Compress
 
-        Cut files into 5min blocks with no overlap and compress each one with the default compressor
+       Cut files into 5min blocks with no overlap and compress each one with the default compressor
         
         ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 compress
         
         
-        Cut files into blocks with 300 lines with no overlap and compress each one with the default compressor
+       Cut files into blocks with 300 lines with no overlap and compress each one with the default compressor
         
         ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 --use-lines compress
         
         
-        Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Compress each one with the paq8l compressor
+       Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Compress each one with the paq8l compressor
         
         ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 -g 60 compress -c paq8l
 
 
 * Entropy
     
-        Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Calculte each files entropy using the Sample entropy.
+       Cut files into blocks with 5 min where one block starts 1 min later then the previous one did. Calculte each files entropy using the Sample entropy.
         
         ./HRFAnalyseFileBlocks.py unittest_dataset/ -s 300 -g 60 entropy sampen
     

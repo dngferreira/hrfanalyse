@@ -3,7 +3,7 @@
 
 The tool set is extensively documented using pydoc. To launch the graphical interface run:
 
-pydoc -g 
+        pydoc -g 
 
 in the command line.
 
@@ -18,44 +18,54 @@ The main interface HRFAnalyseDirect allows for operations to be applied to files
 * Clean:
      
     Retrieve the hrf:
-    ./HRFAnalyseDirect.py unittest_dataset clean
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean
     
     Retrieve the timestamps and hrf from the first hour: 
-    ./HRFAnalyseDirect.py unittest_dataset clean -kt -s 3600
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean -kt -s 3600
     
     
     Retrieve the valid hrf(50<=hrf<=250) for the last hour:
-    ./HRFAnalyseDirect.py unittest_dataset clean -s 3600 --apply_limits --start-at-end
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean -s 3600 --apply_limits --start-at-end
     
     Retrieve the hrf for the interval 1m--61m
-    ./HRFAnalyseDirect.py unittest_dataset clean -ds 1 -s 3600 
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean -ds 1 -s 3600 
     
     Retrieve the hrf from first 2000 lines:
-    ./HRFAnalyseDirect.py unittest_dataset clean -s 2000 --use_lines
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean -s 2000 --use_lines
     
     Break the file into 5 minute blocks where the blocks don't overlap
-    ./HRFAnalyseDirect.py unittest_dataset clean -s 300 --full-file
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean -s 300 --full-file
     
     Break the file into 5 minute blocks where the blocks start with a one
     minute difference
-    ./HRFAnalyseDirect.py unittest_dataset clean -s 300 -g 60 --full-file
+        
+        ./HRFAnalyseDirect.py unittest_dataset clean -s 300 -g 60 --full-file
 
 
 
 * Compress
      
     Compress using the gzip algorithm (maximum compression level will be used)
-    ./HRFAnalyseDirectory.py unittest_dataset compress -c gzip
+        
+        ./HRFAnalyseDirectory.py unittest_dataset compress -c gzip
     
     Compress using the bzip2 algorithm with minimum compression(1 in this case):
-    ./HRFAnalyseDirectory.py unittest_dataset -c bzip2 --level 1
+        
+        ./HRFAnalyseDirectory.py unittest_dataset -c bzip2 --level 1
 
 
 * Entropy
     
     Calculate the entropy using Approximate entropy with tolerance 0.2 and matrix
     dimension 2 (reference values for the analysis of biological data)
-    ./HRFAnalyseDirectory.py unittest_dataset entropy apen -t 0.2
+     
+        ./HRFAnalyseDirectory.py unittest_dataset entropy apen -t 0.2
 
 
 ## HRFAnalyseFileBlocks

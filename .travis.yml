@@ -4,6 +4,8 @@ python:
 
 addons:
   apt:
+    sources:
+     - ubuntu-toolchain-r-test
     packages:
     - yasm
     - g++-4.8

@@ -1,0 +1,30 @@
+## Take a look at PPMdType.h for additional compiler & environment options
+PROJECT = MTExample
+DEBUG = 0
+CPP_SET = $(PROJECT).cpp Model.cpp
+C_SET =
+
+CC = icc -parallel
+LINK = icc -parallel
+CODE_FLAGS = -fno-rtti -fno-exceptions -D_USE_THREAD_KEYWORD
+LIBS = 	
+
+ifeq ($(DEBUG),0)
+  OPT_FLAGS = -O3 -xW -ip -auto-ilp32
+  DEBUG_FLAGS = -g0
+  LD_FLAG = -s
+else
+  OPT_FLAGS = -O0
+  DEBUG_FLAGS = -g -debug extended
+  LD_FLAG = -g
+endif
+
+OBJ_SET = $(CPP_SET:.cpp=.o) $(C_SET:.c=.o)
+
+$(PROJECT): $(OBJ_SET)
+	@$(LINK) $(CODE_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -o $(PROJECT) $(OBJ_SET) $(LIBS) -lstdc++ -Xlinker $(LD_FLAG)
+
+.cpp.o:
+	@$(CC) $(CODE_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -c $^
+.c.o:
+	@$(CC) $(CODE_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) -c $^

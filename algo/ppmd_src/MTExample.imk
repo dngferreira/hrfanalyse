@@ -1,0 +1,8 @@
+MTExample.exe: MTExample.obj Model.obj
+	@icl MTExample.obj Model.obj -link /OUT:MTExample.exe /RELEASE /ALIGN:4096 /NODEFAULTLIB:LIBC
+
+MTExample.obj: MTExample.cpp 
+	@icl /MT /O1 /G6A /D_USE_THREAD_KEYWORD -c MTExample.cpp 
+
+Model.obj: Model.cpp 
+	@icl /GT /O3 /G6A /D_USE_THREAD_KEYWORD -c Model.cpp 

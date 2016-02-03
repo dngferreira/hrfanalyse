@@ -12,3 +12,5 @@ script:
   - py.test --cov=tools
 after_success:
   - coveralls
+env:
+  - PATH=$PATH:$TRAVIS_BUILD_DIR/algo/paq8l/

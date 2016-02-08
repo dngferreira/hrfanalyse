@@ -1,7 +1,7 @@
 
 [![Build Status](https://travis-ci.org/dngferreira/hrfanalyse.svg?branch=master)](https://travis-ci.org/dngferreira/hrfanalyse)
 [![Coverage Status](https://coveralls.io/repos/github/dngferreira/hrfanalyse/badge.svg?branch=master)](https://coveralls.io/github/dngferreira/hrfanalyse?branch=master)
-
+    
 ## Documentation
 
 The tool set is extensively documented using pydoc. To launch the graphical interface run:

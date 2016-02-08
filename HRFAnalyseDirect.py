@@ -77,8 +77,8 @@ compress: This command allows you to compress all the files in the
      information).
      
 
-     OUTCOME: Calling this commmand will create a csv file using ';'
-     as a field delimiter. The compression algorith and the
+     OUTCOME: Calling this command will create a csv file using ';'
+     as a field delimiter. The compression algorithm and the
      compression level used are used to name the resulting file. This
      file will be created in the parent of the directory we are
      working with. Each file is represented by a row with three
@@ -91,7 +91,7 @@ compress: This command allows you to compress all the files in the
                         compressors:paq8l, lzma, gzip, zip, bzip2, ppmd,
                         zlib, spbio;default:[paq8l]
      --level LEVEL      compression level to be used, this variable is
-                        compressor dependent; default:[The maximum of wathever
+                        compressor dependent; default:[The maximum of whatever
                         compressor was chosen]
      --decompression    Use this option if you also wish to calculate how long
                         it takes to decompress the file once it's compressed
@@ -100,7 +100,7 @@ compress: This command allows you to compress all the files in the
 entropy: This command allows you to calculate the entropy for all
      files in a given directory.
     
-     OUTCOME: Calling this commmand will create a csv file using ';'
+     OUTCOME: Calling this command will create a csv file using ';'
      as a field delimiter. The entropy measure and the
      compression level used are used to name the resulting file. This
      file will be created in the parent of the directory we are
@@ -111,8 +111,8 @@ entropy: This command allows you to calculate the entropy for all
     COMMAND_OPTIONS are the available entropy measures:
 
      sampen              Sample Entropy
-     apen                Aproximate Entropy
-     apenv2              A slightly different implementation of Aproximate Entropy
+     apen                Approximate Entropy
+     apenv2              A slightly different implementation of Approximate Entropy
 
     For a sampen and apen documentation please look at:
              pyeeg (http://code.google.com/p/pyeeg/downloads/list)
@@ -134,20 +134,20 @@ Examples :
      ./HRFAnalyseDirect.py unittest_dataset clean -kt -s 3600
 
 
-     Retrive the valid hrf(50<=hrf<=250) for the last hour:
+     Retrieve the valid hrf(50<=hrf<=250) for the last hour:
      ./HRFAnalyseDirect.py unittest_dataset clean -s 3600 --apply_limits --start-at-end
 
-     Retrive the hrf for the interval 1m--61m
+     Retrieve the hrf for the interval 1m--61m
      ./HRFAnalyseDirect.py unittest_dataset clean -ds 1 -s 3600 
 
-     Retrive the hrf from first 2000 lines:
+     Retrieve the hrf from first 2000 lines:
      ./HRFAnalyseDirect.py unittest_dataset clean -s 2000 --use_lines
 
      Break the file into 5 minute blocks where the blocks don't overlap
      ./HRFAnalyseDirect.py unittest_dataset clean -s 300 --full-file
 
      Break the file into 5 minute blocks where the blocks start with a one
-      minute diference
+      minute difference
     ./HRFAnalyseDirect.py unittest_dataset clean -s 300 -g 60 --full-file
 
 
@@ -161,7 +161,7 @@ Examples :
 
 
   =>Entropy
-     Calcutate the entropy using Aproximate entropy with tolerance 0.2 and matrix 
+     Calcutate the entropy using Approximate entropy with tolerance 0.2 and matrix
       dimension 2 (reference values for the analysis of biological data)
      ./HRFAnalyseDirectory.py unittest_dataset entropy apen -t 0.2
 

@@ -34,6 +34,16 @@ class TestCompressModule(unittest.TestCase):
         self.assertEqual(cd.original, 47385)
         self.assertEqual(cd.compressed, 17029)
 
+    def test_brotli_max(self):
+        """
+    Test the result of calling the brotli compression for the file with maximum
+    compression level.
+
+    """
+        cd = tools.compress.brotli_compress('unittest_dataset_clean/adulterado.txt', 9, False)
+        self.assertEqual(cd.original, 47385)
+        self.assertEqual(cd.compressed, 17029)
+
     @unittest.skipIf('paq8l' not in tools.compress.AVAILABLE_COMPRESSORS,
                      "Paq8l not installed: paq8l avalable at cs.fit.edu/~mmahoney/compression/")
     def test_paq8l_max(self):

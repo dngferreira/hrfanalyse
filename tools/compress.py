@@ -1,6 +1,8 @@
 """
 Copyright (C) 2012 Mara Matias
 
+Edited by Duarte Ferreira - 2016
+
 This file is part of HRFAnalyse.
 
     HRFAnalyse is free software: you can redistribute it and/or modify
@@ -47,6 +49,13 @@ import bz2
 import timeit
 import time
 from collections import namedtuple
+import sys
+# path = os.path.abspath(__file__)
+# os.path.dirname(path)+
+# sys.path.append('/home/vagrant/Code/algo/brotli/python')
+
+# print sys.path
+import brotli
 
 try:
     import lzma
@@ -157,10 +166,10 @@ def paq8l_compress(inputfile, level, decompress):
     decompress_time = None
     if decompress:
         decompress_time = min(timeit.repeat(
-                'subprocess.check_output(\'paq8l -d "%s.paq8l"\',shell=True,stderr=subprocess.STDOUT)' % inputfile,
-                number=1,
-                repeat=3,
-                setup='import subprocess'))
+            'subprocess.check_output(\'paq8l -d "%s.paq8l"\',shell=True,stderr=subprocess.STDOUT)' % inputfile,
+            number=1,
+            repeat=3,
+            setup='import subprocess'))
 
     os.remove('%s.paq8l' % inputfile)
 
@@ -243,11 +252,11 @@ def ppmd_compress(inputfile, level, decompress):
     decompress_time = None
     if decompress:
         decompress_time = min(
-                timeit.repeat(
-                        'subprocess.call(\'ppmd d -s "%s.ppmd"\',shell=True,stderr=subprocess.STDOUT)' % inputfile,
-                        number=5,
-                        repeat=3,
-                        setup='import subprocess'))
+            timeit.repeat(
+                'subprocess.call(\'ppmd d -s "%s.ppmd"\',shell=True,stderr=subprocess.STDOUT)' % inputfile,
+                number=5,
+                repeat=3,
+                setup='import subprocess'))
 
     os.remove('%s.ppmd' % inputfile)
 
@@ -272,6 +281,36 @@ def spbio_compress(inputfile, level, decompress):
     return original_size, compressed_size
 
 
+def brotli_compress(infile, level, decompress):
+    """
+    @param infile
+    @param level
+    @param decompress
+    @return CompressionData
+
+    Compresses one file using the brotli algorithm by google.
+
+    """
+
+    original_size = int(os.stat(infile).st_size)
+    with open(infile, "rU") as fdorig:
+        origlines = fdorig.read()
+    origtext = memoryview(bytearray(origlines, "utf8"))
+    # compressedtext = memoryview(zlib.compress(origtext.tobytes(), int(level)))
+    compressedtext = memoryview(brotli.compress(origtext.tobytes(), quality=int(level)))
+    compressed_size = len(compressedtext)
+
+    decompress_time = None
+    if decompress:
+        decompress_time = min(timeit.repeat(lambda: zlib.decompress(compressedtext.tobytes()),
+                                            number=10,
+                                            repeat=3, timer=time.clock))
+
+    cd = CompressionData(original_size, compressed_size, decompress_time)
+
+    return cd
+
+
 # AUXILIARY FUNCTIONS
 
 def test_compressors():
@@ -289,6 +328,7 @@ def test_compressors():
     available = dict()
     available["gzip"] = (1, 9)
     available["bzip2"] = (1, 9)
+    available["brotli"] = (1, 11)
     if lzma_available:
         available["lzma"] = (6, 6)
     exec_path = os.environ.get("PATH")
@@ -324,7 +364,7 @@ def add_parser_options(parser):
                         choices=AVAILABLE_COMPRESSORS,
                         default=list(AVAILABLE_COMPRESSORS.keys())[0],
                         help="compression compressor to be used, available compressors:" + ', '.join(
-                                AVAILABLE_COMPRESSORS) + ";default:[%(default)s]")
+                            AVAILABLE_COMPRESSORS) + ";default:[%(default)s]")
     parser.add_argument("--decompress",
                         dest="decompress",
                         action="store_true",
@@ -350,11 +390,11 @@ def set_level(options):
     if ((not options['level']) or
             (options['level'] > AVAILABLE_COMPRESSORS[options['compressor']][1])):
         module_logger.info(
-                "Your chosen level was above the maximum, setting level to maximum: {0}".format(options['level']))
+            "Your chosen level was above the maximum, setting level to maximum: {0}".format(options['level']))
         level = AVAILABLE_COMPRESSORS[options['compressor']][1]
     elif options['level'] < AVAILABLE_COMPRESSORS[options['compressor']][0]:
         module_logger.info(
-                "Your chosen level was below minimum, setting level to minimum: {0}".format(options['level']))
+            "Your chosen level was below minimum, setting level to minimum: {0}".format(options['level']))
         level = AVAILABLE_COMPRESSORS[options['compressor']][0]
     else:
         level = options['level']

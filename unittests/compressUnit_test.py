@@ -42,7 +42,7 @@ class TestCompressModule(unittest.TestCase):
     """
         cd = tools.compress.brotli_compress('unittest_dataset_clean/adulterado.txt', 11, False)
         self.assertEqual(cd.original, 47385)
-        self.assertEqual(cd.compressed, 16814)
+        self.assertEqual(cd.compressed, 13969)
 
     @unittest.skipIf('paq8l' not in tools.compress.AVAILABLE_COMPRESSORS,
                      "Paq8l not installed: paq8l avalable at cs.fit.edu/~mmahoney/compression/")
